@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import './App.css'
 import MapPage from './MapPage'
 
@@ -29,125 +29,53 @@ function useTheme() {
   return { theme, toggle: () => setTheme(t => t === 'dark' ? 'light' : 'dark') }
 }
 
-const RESTAURANTS = [
-  {
-    id: 1,
-    name: 'Le Jardin Secret',
-    cuisine: 'Française gastronomique',
-    city: 'Paris 8e',
-    lat: 48.874,
-    lng: 2.308,
-    minFollowers: 10000,
-    description: 'Menu dégustation 7 services avec accords mets-vins.',
-    image: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400&q=80',
-  },
-  {
-    id: 2,
-    name: 'Umami House',
-    cuisine: 'Japonaise fusion',
-    city: 'Paris 2e',
-    lat: 48.865,
-    lng: 2.347,
-    minFollowers: 5000,
-    description: 'Omakase 10 pièces préparé par le chef Kenji.',
-    image: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=400&q=80',
-  },
-  {
-    id: 3,
-    name: 'La Brasa',
-    cuisine: 'Méditerranéenne',
-    city: 'Lyon 6e',
-    lat: 45.767,
-    lng: 4.834,
-    minFollowers: 3000,
-    description: 'Dégustation autour des produits de saison et du feu de bois.',
-    image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=400&q=80',
-  },
-  {
-    id: 4,
-    name: 'Azur & Sel',
-    cuisine: 'Poissons & fruits de mer',
-    city: 'Marseille',
-    lat: 43.296,
-    lng: 5.369,
-    minFollowers: 8000,
-    description: 'Plateau royal et menu homard en bord de mer.',
-    image: 'https://images.unsplash.com/photo-1559339352-11d035aa65de?w=400&q=80',
-  },
-  {
-    id: 5,
-    name: 'Maison Noire',
-    cuisine: 'Bistrot moderne',
-    city: 'Bordeaux',
-    lat: 44.836,
-    lng: -0.58,
-    minFollowers: 2000,
-    description: 'Menu surprise du marché en 5 temps, cave de 300 références.',
-    image: 'https://images.unsplash.com/photo-1466978913421-dad2ebd01d17?w=400&q=80',
-  },
-  {
-    id: 6,
-    name: 'Épices & Âme',
-    cuisine: 'Nord-Africaine',
-    city: 'Paris 18e',
-    lat: 48.889,
-    lng: 2.347,
-    minFollowers: 4000,
-    description: 'Méchoui, bastilla et pastilla sucrée en format dégustation.',
-    image: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=400&q=80',
-  },
-]
-
-function haversine(lat1: number, lng1: number, lat2: number, lng2: number) {
-  const R = 6371
-  const dLat = ((lat2 - lat1) * Math.PI) / 180
-  const dLng = ((lng2 - lng1) * Math.PI) / 180
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLng / 2) ** 2
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+type Restaurant = {
+  id: number
+  nom: string
+  adresse: string
+  description: string
+  telephone: string
+  statut: string
+  info: string
 }
 
-function formatFollowers(n: number) {
-  return n >= 1000 ? `${(n / 1000).toFixed(0)}k` : String(n)
+const PHOTOS_PAR_CUISINE: Record<string, string> = {
+  'japonais':    'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=400&q=80',
+  'italien':     'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=400&q=80',
+  'français':    'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400&q=80',
+  'française':   'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400&q=80',
+  'mexicain':    'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=400&q=80',
+  'libanais':    'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=400&q=80',
+  'méditerranée':'https://images.unsplash.com/photo-1559339352-11d035aa65de?w=400&q=80',
+  'burger':      'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&q=80',
+  'poisson':     'https://images.unsplash.com/photo-1559339352-11d035aa65de?w=400&q=80',
+  'catalan':     'https://images.unsplash.com/photo-1466978913421-dad2ebd01d17?w=400&q=80',
+  'default':     'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&q=80',
 }
+
+function getPhoto(description: string): string {
+  const desc = description.toLowerCase()
+  for (const [mot, url] of Object.entries(PHOTOS_PAR_CUISINE)) {
+    if (desc.includes(mot)) return url
+  }
+  return PHOTOS_PAR_CUISINE['default']
+}
+
 
 export default function App() {
   const { theme, toggle } = useTheme()
   const [page, setPage] = useState<'home' | 'map'>('home')
   useScrollReveal()
-  const [userPos, setUserPos] = useState<{ lat: number; lng: number } | null>(null)
-  const [geoError, setGeoError] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [sortBy, setSortBy] = useState<'distance' | 'followers'>('followers')
+  const [restaurants, setRestaurants] = useState<Restaurant[]>([])
+  const [fetchError, setFetchError] = useState(false)
+  const [fetchLoading, setFetchLoading] = useState(true)
 
-  function locateMe() {
-    setLoading(true)
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setUserPos({ lat: pos.coords.latitude, lng: pos.coords.longitude })
-        setSortBy('distance')
-        setLoading(false)
-      },
-      () => {
-        setGeoError(true)
-        setLoading(false)
-      }
-    )
-  }
-
-  const restaurants = [...RESTAURANTS]
-    .map((r) => ({
-      ...r,
-      distance: userPos ? haversine(userPos.lat, userPos.lng, r.lat, r.lng) : null,
-    }))
-    .sort((a, b) => {
-      if (sortBy === 'distance' && a.distance !== null && b.distance !== null)
-        return a.distance - b.distance
-      return a.minFollowers - b.minFollowers
-    })
+  useEffect(() => {
+    fetch('http://localhost:3001/restaurants')
+      .then(res => res.json())
+      .then(data => { setRestaurants(data); setFetchLoading(false) })
+      .catch(() => { setFetchError(true); setFetchLoading(false) })
+  }, [])
 
   if (page === 'map') return (
     <div style={{ background: 'var(--bg)', minHeight: '100svh' }}>
@@ -226,42 +154,21 @@ export default function App() {
       <section className="lp-restaurants" id="restaurants">
         <div className="restaurants-header">
           <h2 className="section-title">Restaurants partenaires</h2>
-          <div className="restaurants-controls">
-            <button
-              className={`btn btn-sm ${sortBy === 'followers' ? 'btn-active' : 'btn-ghost'}`}
-              onClick={() => setSortBy('followers')}
-            >
-              Par abonnés requis
-            </button>
-            <button
-              className={`btn btn-sm ${sortBy === 'distance' && userPos ? 'btn-active' : 'btn-ghost'}`}
-              onClick={userPos ? () => setSortBy('distance') : locateMe}
-              disabled={loading}
-            >
-              {loading ? 'Localisation…' : userPos ? 'Par distance' : '📍 Près de moi'}
-            </button>
-          </div>
         </div>
-        {geoError && (
-          <p className="geo-error">Géolocalisation refusée — tri par abonnés par défaut.</p>
-        )}
+        {fetchLoading && <p className="geo-error">Chargement des restaurants…</p>}
+        {fetchError && <p className="geo-error">Erreur : impossible de contacter le serveur (port 3001).</p>}
         <div className="restaurant-grid">
           {restaurants.map((r) => (
-            <div className="restaurant-card reveal" key={r.id}>
+            <div className="restaurant-card" key={r.id}>
               <div className="card-img-wrap">
-                <img src={r.image} alt={r.name} className="card-img" />
-                <div className="card-badge">
-                  <span className="badge-icon">👥</span>
-                  {formatFollowers(r.minFollowers)} abonnés min.
-                </div>
+                <img src={getPhoto(r.description)} alt={r.nom} className="card-img" />
+                {r.statut && <div className="card-badge">{r.statut}</div>}
               </div>
               <div className="card-body">
-                <div className="card-meta">{r.cuisine} · {r.city}</div>
-                <h3 className="card-title">{r.name}</h3>
-                <p className="card-desc">{r.description}</p>
-                {r.distance !== null && (
-                  <p className="card-distance">📍 {r.distance < 1 ? '<1' : r.distance.toFixed(0)} km</p>
-                )}
+                <div className="card-meta">{r.description}</div>
+                <h3 className="card-title">{r.nom}</h3>
+                <p className="card-desc">{r.adresse}</p>
+                {r.telephone && <p className="card-desc">{r.telephone}</p>}
                 <button className="btn btn-primary btn-full">Je candidate</button>
               </div>
             </div>
