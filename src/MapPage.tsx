@@ -14,6 +14,27 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 })
 
+const PHOTOS_PAR_CUISINE: Record<string, string> = {
+  'japonais':   'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=400&q=80',
+  'italien':    'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=400&q=80',
+  'français':   'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400&q=80',
+  'française':  'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400&q=80',
+  'mexicain':   'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=400&q=80',
+  'libanais':   'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=400&q=80',
+  'burger':     'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&q=80',
+  'poisson':    'https://images.unsplash.com/photo-1559339352-11d035aa65de?w=400&q=80',
+  'catalan':    'https://images.unsplash.com/photo-1466978913421-dad2ebd01d17?w=400&q=80',
+  'default':    'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&q=80',
+}
+
+function getPhoto(description: string): string {
+  const desc = (description || '').toLowerCase()
+  for (const [mot, url] of Object.entries(PHOTOS_PAR_CUISINE)) {
+    if (desc.includes(mot)) return url
+  }
+  return PHOTOS_PAR_CUISINE['default']
+}
+
 type Restaurant = {
   id: number
   nom: string
@@ -162,10 +183,11 @@ export default function MapPage() {
               className={`sidebar-item ${selectedId === r.id ? 'sidebar-item--active' : ''}`}
               onClick={() => focusRestaurant(r)}
             >
+              <img src={getPhoto(r.description)} alt={r.nom} className="sidebar-item__img" />
               <div className="sidebar-item__info">
-                <div className="sidebar-item__meta">{r.description}</div>
+                <div className="sidebar-item__meta">{r.description || 'Restaurant'}</div>
                 <div className="sidebar-item__name">{r.nom}</div>
-                <div className="sidebar-item__followers">{r.adresse}</div>
+                <div className="sidebar-item__followers">📍 {r.adresse}</div>
               </div>
             </li>
           ))}
