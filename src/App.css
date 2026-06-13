@@ -1,0 +1,356 @@
+/* ── Navbar ── */
+.lp-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 48px;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  z-index: 100;
+}
+
+.lp-logo {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-h);
+  letter-spacing: -0.5px;
+}
+
+.theme-toggle {
+  font-size: 13px;
+}
+
+/* ── Layout ── */
+.landing {
+  width: 100%;
+  max-width: 1126px;
+  margin: 0 auto;
+  text-align: left;
+}
+
+/* ── Hero ── */
+.lp-hero {
+  padding: 80px 48px 64px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.lp-hero-badge {
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: var(--accent-bg);
+  border: 1px solid var(--accent-border);
+  border-radius: 100px;
+  padding: 4px 14px;
+  width: fit-content;
+}
+
+.lp-hero-title {
+  font-size: 64px;
+  font-weight: 700;
+  letter-spacing: -2px;
+  line-height: 1.05;
+  color: var(--text-h);
+  margin: 0;
+}
+
+.lp-hero-sub {
+  font-size: 18px;
+  line-height: 1.6;
+  color: var(--text);
+  max-width: 600px;
+}
+
+.lp-hero-cta {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.lp-hero-stats {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  padding-top: 16px;
+  flex-wrap: wrap;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.stat-num {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-h);
+  letter-spacing: -0.5px;
+}
+
+.stat span:last-child {
+  font-size: 13px;
+  color: var(--text);
+}
+
+.stat-divider {
+  width: 1px;
+  height: 40px;
+  background: var(--border);
+}
+
+/* ── Buttons ── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 500;
+  padding: 10px 20px;
+  cursor: pointer;
+  border: none;
+  text-decoration: none;
+  transition: opacity 0.15s, box-shadow 0.15s;
+}
+
+.btn:hover { opacity: 0.85; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-h);
+  border: 1px solid var(--border);
+}
+
+.btn-active {
+  background: var(--accent-bg);
+  color: var(--accent);
+  border: 1px solid var(--accent-border);
+}
+
+.btn-sm {
+  font-size: 13px;
+  padding: 7px 14px;
+}
+
+.btn-full {
+  width: 100%;
+  margin-top: auto;
+  padding: 12px;
+}
+
+/* ── Section shared ── */
+.section-title {
+  font-size: 36px;
+  font-weight: 700;
+  letter-spacing: -0.8px;
+  color: var(--text-h);
+  margin: 0 0 32px;
+}
+
+/* ── How it works ── */
+.lp-how {
+  padding: 64px 48px;
+  border-bottom: 1px solid var(--border);
+}
+
+.steps {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.step {
+  flex: 1 1 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.step-num {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--accent-bg);
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--accent-border);
+}
+
+.step h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-h);
+  margin: 0;
+}
+
+.step p {
+  font-size: 15px;
+  color: var(--text);
+  line-height: 1.5;
+}
+
+.step-arrow {
+  font-size: 24px;
+  color: var(--border);
+  padding-top: 8px;
+  align-self: flex-start;
+}
+
+/* ── Restaurants ── */
+.lp-restaurants {
+  padding: 64px 48px;
+  border-bottom: 1px solid var(--border);
+}
+
+.restaurants-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.restaurants-header .section-title {
+  margin: 0;
+}
+
+.restaurants-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.geo-error {
+  font-size: 14px;
+  color: var(--text);
+  margin-bottom: 16px;
+  padding: 10px 14px;
+  background: var(--code-bg);
+  border-radius: 6px;
+}
+
+.restaurant-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+.restaurant-card {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: box-shadow 0.2s;
+}
+
+.restaurant-card:hover {
+  box-shadow: var(--shadow);
+}
+
+.card-img-wrap {
+  position: relative;
+}
+
+.card-img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  display: block;
+}
+
+.card-badge {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  background: rgba(0, 0, 0, 0.72);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 100px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.card-body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.card-meta {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--accent);
+}
+
+.card-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-h);
+  margin: 0;
+}
+
+.card-desc {
+  font-size: 14px;
+  color: var(--text);
+  line-height: 1.5;
+  flex: 1;
+}
+
+.card-distance {
+  font-size: 13px;
+  color: var(--text);
+  margin: 0;
+}
+
+/* ── Footer ── */
+.lp-footer {
+  padding: 32px 48px;
+  font-size: 14px;
+  color: var(--text);
+  text-align: center;
+}
+
+/* ── Responsive ── */
+@media (max-width: 900px) {
+  .lp-nav { padding: 14px 24px; }
+  .lp-hero { padding: 48px 24px 40px; }
+  .lp-hero-title { font-size: 40px; }
+  .lp-how, .lp-restaurants { padding: 48px 24px; }
+  .restaurant-grid { grid-template-columns: repeat(2, 1fr); }
+  .step-arrow { display: none; }
+}
+
+@media (max-width: 600px) {
+  .lp-hero-title { font-size: 32px; }
+  .restaurant-grid { grid-template-columns: 1fr; }
+  .restaurants-header { flex-direction: column; align-items: flex-start; }
+}
