@@ -4,7 +4,11 @@
       "Bash(curl -L \"https://cataas.com/cat/black\" -o /Users/cheickcamara/projects/mon-site/src/assets/hero.png)",
       "Bash(git init *)",
       "Bash(git add *)",
-      "Bash(git commit -m ' *)"
+      "Bash(git commit -m ' *)",
+      "Bash(/usr/local/bin/npm install *)",
+      "Bash(/opt/homebrew/bin/npm install *)",
+      "Bash(which node *)",
+      "Read(//Users/cheickcamara/**)"
     ]
   }
 }

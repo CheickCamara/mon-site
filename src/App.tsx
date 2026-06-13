@@ -1,5 +1,18 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import './App.css'
+import MapPage from './MapPage'
+
+function useScrollReveal() {
+  useEffect(() => {
+    const els = document.querySelectorAll('.reveal')
+    const observer = new IntersectionObserver(
+      (entries) => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible') }),
+      { threshold: 0.15 }
+    )
+    els.forEach(el => observer.observe(el))
+    return () => observer.disconnect()
+  }, [])
+}
 
 function useTheme() {
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
@@ -103,6 +116,8 @@ function formatFollowers(n: number) {
 
 export default function App() {
   const { theme, toggle } = useTheme()
+  const [page, setPage] = useState<'home' | 'map'>('home')
+  useScrollReveal()
   const [userPos, setUserPos] = useState<{ lat: number; lng: number } | null>(null)
   const [geoError, setGeoError] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -134,19 +149,37 @@ export default function App() {
       return a.minFollowers - b.minFollowers
     })
 
+  if (page === 'map') return (
+    <div style={{ background: 'var(--bg)', minHeight: '100svh' }}>
+      <nav className="lp-nav">
+        <span className="lp-logo">Pop Fluence</span>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="btn btn-ghost btn-sm" onClick={() => setPage('home')}>← Accueil</button>
+          <button className="btn btn-ghost btn-sm theme-toggle" onClick={toggle}>
+            {theme === 'dark' ? '☀️ Clair' : '🌙 Sombre'}
+          </button>
+        </div>
+      </nav>
+      <MapPage />
+    </div>
+  )
+
   return (
     <div className="landing">
       <nav className="lp-nav">
         <span className="lp-logo">Pop Fluence</span>
-        <button className="btn btn-ghost btn-sm theme-toggle" onClick={toggle} aria-label="Changer le thème">
-          {theme === 'dark' ? '☀️ Clair' : '🌙 Sombre'}
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="btn btn-ghost btn-sm" onClick={() => setPage('map')}>🗺 Carte</button>
+          <button className="btn btn-ghost btn-sm theme-toggle" onClick={toggle} aria-label="Changer le thème">
+            {theme === 'dark' ? '☀️ Clair' : '🌙 Sombre'}
+          </button>
+        </div>
       </nav>
       {/* HERO */}
       <header className="lp-hero">
         <div className="lp-hero-badge">Pour les créateurs de contenu</div>
         <h1 className="lp-hero-title">
-          Mange gratuitement.<br />Crée du contenu.
+          <span className="highlight">Mange</span> gratuitement.<br />Crée du contenu.
         </h1>
         <p className="lp-hero-sub">
           Les meilleurs restaurants t'offrent leur menu dégustation en échange d'une publication
@@ -169,19 +202,19 @@ export default function App() {
       <section className="lp-how" id="how">
         <h2 className="section-title">Comment ça marche</h2>
         <div className="steps">
-          <div className="step">
+          <div className="step reveal reveal-delay-1">
             <div className="step-num">1</div>
             <h3>Trouve un restaurant</h3>
             <p>Utilise ta géolocalisation pour voir les établissements proches de toi et leur seuil d'abonnés minimum.</p>
           </div>
-          <div className="step-arrow">→</div>
-          <div className="step">
+          <div className="step-connector">→</div>
+          <div className="step reveal reveal-delay-2">
             <div className="step-num">2</div>
             <h3>Envoie ta candidature</h3>
             <p>Partage ton profil et tes statistiques. Le restaurant valide ta demande sous 48h.</p>
           </div>
-          <div className="step-arrow">→</div>
-          <div className="step">
+          <div className="step-connector">→</div>
+          <div className="step reveal reveal-delay-3">
             <div className="step-num">3</div>
             <h3>Profite & publie</h3>
             <p>Tu dégustes gratuitement et tu postes une story + un post dans les 7 jours suivant ta visite.</p>
@@ -214,7 +247,7 @@ export default function App() {
         )}
         <div className="restaurant-grid">
           {restaurants.map((r) => (
-            <div className="restaurant-card" key={r.id}>
+            <div className="restaurant-card reveal" key={r.id}>
               <div className="card-img-wrap">
                 <img src={r.image} alt={r.name} className="card-img" />
                 <div className="card-badge">
