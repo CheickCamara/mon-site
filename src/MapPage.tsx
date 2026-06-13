@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+import 'leaflet.markercluster/dist/MarkerCluster.css'
+import 'leaflet.markercluster/dist/MarkerCluster.Default.css'
+import 'leaflet.markercluster'
 import './MapPage.css'
 
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png'
@@ -68,6 +71,7 @@ export default function MapPage() {
   const mapRef = useRef<HTMLDivElement>(null)
   const mapInstanceRef = useRef<L.Map | null>(null)
   const markersRef = useRef<Map<number, L.Marker>>(new Map())
+  const clusterRef = useRef<L.MarkerClusterGroup | null>(null)
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [search, setSearch] = useState('')
   const [restaurants, setRestaurants] = useState<Restaurant[]>([])
@@ -103,6 +107,10 @@ export default function MapPage() {
 
     L.control.zoom({ position: 'bottomright' }).addTo(map)
 
+    const cluster = (L as any).markerClusterGroup({ maxClusterRadius: 50 })
+    map.addLayer(cluster)
+    clusterRef.current = cluster
+
     mapInstanceRef.current = map
     return () => { map.remove(); mapInstanceRef.current = null }
   }, [])
@@ -122,22 +130,23 @@ export default function MapPage() {
 
   // Sync markers — uniquement ceux avec coordonnées
   useEffect(() => {
-    const map = mapInstanceRef.current
-    if (!map) return
+    const cluster = clusterRef.current
+    if (!cluster) return
 
-    markersRef.current.forEach(m => m.remove())
+    cluster.clearLayers()
     markersRef.current.clear()
 
     avecCoords.forEach(r => {
       const marker = L.marker([r.lat!, r.lng!], {
         icon: createCustomIcon(selectedId === r.id),
-      }).addTo(map)
+      })
 
       marker.on('click', () => {
         setSelectedId(r.id)
-        map.flyTo([r.lat!, r.lng!], 15, { duration: 1.2 })
+        mapInstanceRef.current?.flyTo([r.lat!, r.lng!], 15, { duration: 1.2 })
       })
 
+      cluster.addLayer(marker)
       markersRef.current.set(r.id, marker)
     })
   }, [avecCoords, selectedId])
