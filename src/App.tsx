@@ -62,9 +62,75 @@ function getPhoto(description: string): string {
 }
 
 
+function AuthModal({ onClose }: { onClose: () => void }) {
+  const [tab, setTab] = useState<'login' | 'signup'>('login')
+  const [form, setForm] = useState({ email: '', password: '', name: '', network: '', followers: '' })
+
+  const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+    setForm(f => ({ ...f, [k]: e.target.value }))
+
+  return (
+    <div className="auth-overlay" onClick={onClose}>
+      <div className="auth-modal" onClick={e => e.stopPropagation()}>
+        <button className="auth-close" onClick={onClose}>✕</button>
+
+        <div className="auth-tabs">
+          <button className={`auth-tab ${tab === 'login' ? 'active' : ''}`} onClick={() => setTab('login')}>
+            Connexion
+          </button>
+          <button className={`auth-tab ${tab === 'signup' ? 'active' : ''}`} onClick={() => setTab('signup')}>
+            Inscription
+          </button>
+        </div>
+
+        {tab === 'login' ? (
+          <form className="auth-form" onSubmit={e => e.preventDefault()}>
+            <p className="auth-subtitle">Content de te revoir 👋</p>
+            <label>Adresse e-mail
+              <input type="email" placeholder="toi@exemple.com" value={form.email} onChange={set('email')} required />
+            </label>
+            <label>Mot de passe
+              <input type="password" placeholder="••••••••" value={form.password} onChange={set('password')} required />
+            </label>
+            <a href="#" className="auth-forgot">Mot de passe oublié ?</a>
+            <button type="submit" className="btn btn-primary btn-full auth-submit">Se connecter</button>
+          </form>
+        ) : (
+          <form className="auth-form" onSubmit={e => e.preventDefault()}>
+            <p className="auth-subtitle">Rejoins la communauté — c'est gratuit ✨</p>
+            <label>Prénom ou pseudo
+              <input type="text" placeholder="Ton nom de créateur" value={form.name} onChange={set('name')} required />
+            </label>
+            <label>Adresse e-mail
+              <input type="email" placeholder="toi@exemple.com" value={form.email} onChange={set('email')} required />
+            </label>
+            <label>Mot de passe
+              <input type="password" placeholder="8 caractères minimum" value={form.password} onChange={set('password')} required />
+            </label>
+            <label>Réseau principal
+              <select value={form.network} onChange={set('network')} required>
+                <option value="">Choisir un réseau…</option>
+                <option value="instagram">Instagram</option>
+                <option value="tiktok">TikTok</option>
+                <option value="youtube">YouTube</option>
+              </select>
+            </label>
+            <label>Nombre d'abonnés
+              <input type="number" placeholder="Minimum 1 000 requis" min="0" value={form.followers} onChange={set('followers')} required />
+            </label>
+            <button type="submit" className="btn btn-primary btn-full auth-submit">Créer mon compte</button>
+            <p className="auth-terms">En t'inscrivant tu acceptes nos <a href="#">CGU</a> et notre <a href="#">politique de confidentialité</a>.</p>
+          </form>
+        )}
+      </div>
+    </div>
+  )
+}
+
 export default function App() {
   const { theme, toggle } = useTheme()
   const [page, setPage] = useState<'home' | 'map'>('home')
+  const [authOpen, setAuthOpen] = useState(false)
   useScrollReveal()
   const [restaurants, setRestaurants] = useState<Restaurant[]>([])
   const [fetchError, setFetchError] = useState(false)
@@ -96,13 +162,15 @@ export default function App() {
     <div className="landing">
       <nav className="lp-nav">
         <span className="lp-logo">Pop Fluence</span>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <button className="btn btn-ghost btn-sm" onClick={() => setPage('map')}>🗺 Carte</button>
           <button className="btn btn-ghost btn-sm theme-toggle" onClick={toggle} aria-label="Changer le thème">
             {theme === 'dark' ? '☀️ Clair' : '🌙 Sombre'}
           </button>
+          <button className="btn btn-primary btn-sm nav-login" onClick={() => setAuthOpen(true)}>Connexion / Inscription</button>
         </div>
       </nav>
+      {authOpen && <AuthModal onClose={() => setAuthOpen(false)} />}
       {/* HERO */}
       <header className="lp-hero">
         <div className="lp-hero-badge">Pour les créateurs de contenu</div>
@@ -110,12 +178,13 @@ export default function App() {
           <span className="highlight">Mange</span> gratuitement.<br />Crée du contenu.
         </h1>
         <p className="lp-hero-sub">
-          Les meilleurs restaurants t'offrent leur menu dégustation en échange d'une publication
-          authentique sur tes réseaux. Trouve l'établissement qui correspond à ta communauté.
+          Les meilleurs restaurants t'offrent leur menu dégustation — entrée, plat, dessert et boissons —
+          en échange d'une publication authentique sur tes réseaux. Zéro euro à débourser.
+          Juste du contenu sincère et une communauté de <strong>minimum 1 000 abonnés</strong>.
         </p>
         <div className="lp-hero-cta">
           <a href="#restaurants" className="btn btn-primary">Voir les restaurants</a>
-          <a href="#how" className="btn btn-ghost">Comment ça marche</a>
+          <a href="#concept" className="btn btn-ghost">Comment ça marche</a>
         </div>
         <div className="lp-hero-stats">
           <div className="stat"><span className="stat-num">120+</span><span>Restaurants partenaires</span></div>
@@ -126,26 +195,80 @@ export default function App() {
         </div>
       </header>
 
+      {/* CONCEPT SECTION */}
+      <section className="lp-concept" id="concept">
+        <div className="concept-inner">
+          <div className="concept-text">
+            <span className="concept-tag">Le principe</span>
+            <h2 className="section-title left">Dégustation gratuite<br />contre visibilité</h2>
+            <p className="concept-desc">
+              Pop Fluence repose sur un échange simple et gagnant-gagnant : le restaurant t'invite à table,
+              tu lui offres de la visibilité auprès de ta communauté. Pas de cachet, pas d'agence, pas de contrat compliqué.
+            </p>
+            <ul className="concept-list">
+              <li>
+                <span className="concept-icon">🍽️</span>
+                <div>
+                  <strong>Repas 100 % offert</strong>
+                  <span>Entrée, plat, dessert et boissons inclus — valeur moyenne 45 € à 90 €.</span>
+                </div>
+              </li>
+              <li>
+                <span className="concept-icon">📸</span>
+                <div>
+                  <strong>Une story + un post dans les 7 jours</strong>
+                  <span>Contenu authentique, sans script imposé. Tu gardes ta ligne éditoriale.</span>
+                </div>
+              </li>
+              <li>
+                <span className="concept-icon">👥</span>
+                <div>
+                  <strong>1 000 abonnés minimum requis</strong>
+                  <span>Ce seuil garantit une vraie portée pour le restaurant partenaire. Instagram, TikTok ou YouTube — peu importe le réseau.</span>
+                </div>
+              </li>
+              <li>
+                <span className="concept-icon">✅</span>
+                <div>
+                  <strong>Validation sous 48 h</strong>
+                  <span>Le restaurant consulte ton profil et confirme rapidement. Tu reçois une notification dès l'accord.</span>
+                </div>
+              </li>
+            </ul>
+          </div>
+          <div className="concept-badge-col">
+            <div className="concept-badge">
+              <span className="badge-num">1 000</span>
+              <span className="badge-label">abonnés minimum</span>
+              <span className="badge-sub">Instagram · TikTok · YouTube</span>
+            </div>
+            <p className="concept-note">
+              Pas encore 1 000 abonnés ? Inscris-toi quand même — tu recevras une alerte dès que tu atteins le seuil.
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* HOW IT WORKS */}
       <section className="lp-how" id="how">
         <h2 className="section-title">Comment ça marche</h2>
         <div className="steps">
           <div className="step reveal reveal-delay-1">
             <div className="step-num">1</div>
-            <h3>Trouve un restaurant</h3>
-            <p>Utilise ta géolocalisation pour voir les établissements proches de toi et leur seuil d'abonnés minimum.</p>
+            <h3>Vérifie ton éligibilité</h3>
+            <p>Tu as au moins <strong>1 000 abonnés</strong> sur Instagram, TikTok ou YouTube ? Tu es éligible. Crée ton profil en 2 minutes.</p>
           </div>
           <div className="step-connector">→</div>
           <div className="step reveal reveal-delay-2">
             <div className="step-num">2</div>
-            <h3>Envoie ta candidature</h3>
-            <p>Partage ton profil et tes statistiques. Le restaurant valide ta demande sous 48h.</p>
+            <h3>Choisis un restaurant</h3>
+            <p>Géolocalise-toi pour voir les établissements proches et leur seuil d'abonnés. Filtre par cuisine, quartier ou score.</p>
           </div>
           <div className="step-connector">→</div>
           <div className="step reveal reveal-delay-3">
             <div className="step-num">3</div>
-            <h3>Profite & publie</h3>
-            <p>Tu dégustes gratuitement et tu postes une story + un post dans les 7 jours suivant ta visite.</p>
+            <h3>Candidate & déguste</h3>
+            <p>Partage ton profil. Le restaurant valide sous 48 h. Tu dégustes gratuitement et publies dans les 7 jours.</p>
           </div>
         </div>
       </section>

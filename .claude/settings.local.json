@@ -8,7 +8,9 @@
       "Bash(/usr/local/bin/npm install *)",
       "Bash(/opt/homebrew/bin/npm install *)",
       "Bash(which node *)",
-      "Read(//Users/cheickcamara/**)"
+      "Read(//Users/cheickcamara/**)",
+      "Bash(curl -s http://localhost:3001/restaurants)",
+      "Bash(python3 -c ' *)"
     ]
   }
 }
