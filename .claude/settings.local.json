@@ -12,7 +12,8 @@
       "Bash(curl -s http://localhost:3001/restaurants)",
       "Bash(python3 -c ' *)",
       "Bash(sqlite3 /Users/cheickcamara/projects/mon-api/restaurants.db \".tables\")",
-      "Bash(sqlite3 /Users/cheickcamara/projects/mon-api/restaurants.db \".schema\")"
+      "Bash(sqlite3 /Users/cheickcamara/projects/mon-api/restaurants.db \".schema\")",
+      "Bash(npm install *)"
     ]
   }
 }

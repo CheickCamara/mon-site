@@ -77,7 +77,7 @@ export default function MapPage() {
   const [restaurants, setRestaurants] = useState<Restaurant[]>([])
 
   useEffect(() => {
-    fetch('http://localhost:3001/restaurants')
+    fetch('https://mon-api-rqm7.onrender.com/restaurants')
       .then(res => res.json())
       .then(data => setRestaurants(data))
   }, [])
