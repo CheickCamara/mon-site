@@ -39,6 +39,26 @@ type Restaurant = {
   info: string
 }
 
+type Offre = {
+  id: number
+  titre: string
+  description: string
+  menu: string
+  valeur_indicative: number
+  contrepartie: string
+  places_restantes: number
+  tranche_min: number
+  tranche_max: number | null
+  conditions: string
+  restaurants: { nom: string; adresse: string; image: string }
+}
+
+const CONTREPARTIE_LABEL: Record<string, string> = {
+  story: '📱 Story',
+  post: '📸 Post',
+  reel: '🎬 Reel / Vidéo',
+}
+
 const PHOTOS_PAR_CUISINE: Record<string, string> = {
   'japonais':    'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=400&q=80',
   'italien':     'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=400&q=80',
@@ -133,13 +153,20 @@ export default function App() {
   const [authOpen, setAuthOpen] = useState(false)
   useScrollReveal()
   const [restaurants, setRestaurants] = useState<Restaurant[]>([])
+  const [offres, setOffres] = useState<Offre[]>([])
   const [fetchError, setFetchError] = useState(false)
   const [fetchLoading, setFetchLoading] = useState(true)
 
   useEffect(() => {
-    fetch('https://mon-api-rqm7.onrender.com/restaurants')
-      .then(res => res.json())
-      .then(data => { setRestaurants(data); setFetchLoading(false) })
+    Promise.all([
+      fetch('https://mon-api-rqm7.onrender.com/restaurants').then(r => r.json()),
+      fetch('https://mon-api-rqm7.onrender.com/offres').then(r => r.json()),
+    ])
+      .then(([resto, offresData]) => {
+        setRestaurants(resto)
+        setOffres(offresData)
+        setFetchLoading(false)
+      })
       .catch(() => { setFetchError(true); setFetchLoading(false) })
   }, [])
 
@@ -273,26 +300,46 @@ export default function App() {
         </div>
       </section>
 
-      {/* RESTAURANTS */}
+      {/* OFFRES */}
       <section className="lp-restaurants" id="restaurants">
         <div className="restaurants-header">
-          <h2 className="section-title">Restaurants partenaires</h2>
+          <h2 className="section-title">Offres disponibles</h2>
+          <p className="section-sub">Candidate à un repas gratuit en échange d'une publication</p>
         </div>
-        {fetchLoading && <p className="geo-error">Chargement des restaurants…</p>}
-        {fetchError && <p className="geo-error">Erreur : impossible de contacter le serveur (port 3001).</p>}
+        {fetchLoading && <p className="geo-error">Chargement des offres…</p>}
+        {fetchError && <p className="geo-error">Impossible de charger les offres.</p>}
+        {!fetchLoading && !fetchError && offres.length === 0 && (
+          <p className="geo-error">Aucune offre disponible pour le moment. Reviens bientôt !</p>
+        )}
         <div className="restaurant-grid">
-          {restaurants.map((r) => (
-            <div className="restaurant-card" key={r.id}>
+          {offres.map((o) => (
+            <div className="restaurant-card" key={o.id}>
               <div className="card-img-wrap">
-                <img src={getPhoto(r.description)} alt={r.nom} className="card-img" />
-                {r.statut && <div className="card-badge">{r.statut}</div>}
+                <img
+                  src={o.restaurants?.image || getPhoto(o.description || '')}
+                  alt={o.restaurants?.nom}
+                  className="card-img"
+                />
+                <div className="card-badge">{CONTREPARTIE_LABEL[o.contrepartie]}</div>
               </div>
               <div className="card-body">
-                <div className="card-meta">{r.description}</div>
-                <h3 className="card-title">{r.nom}</h3>
-                <p className="card-desc">{r.adresse}</p>
-                {r.telephone && <p className="card-desc">{r.telephone}</p>}
-                <button className="btn btn-primary btn-full">Je candidate</button>
+                <div className="card-meta">{o.restaurants?.nom} · {o.restaurants?.adresse}</div>
+                <h3 className="card-title">{o.titre}</h3>
+                {o.menu && <p className="card-desc">{o.menu}</p>}
+                <div style={{ display: 'flex', gap: 8, margin: '8px 0', flexWrap: 'wrap' }}>
+                  {o.valeur_indicative && (
+                    <span className="card-chip">💶 {o.valeur_indicative} €</span>
+                  )}
+                  <span className="card-chip">
+                    👥 {o.tranche_min.toLocaleString('fr-FR')}
+                    {o.tranche_max ? ` – ${o.tranche_max.toLocaleString('fr-FR')}` : '+'} abonnés
+                  </span>
+                  <span className="card-chip">🪑 {o.places_restantes} place{o.places_restantes > 1 ? 's' : ''}</span>
+                </div>
+                {o.conditions && <p className="card-desc" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>ℹ️ {o.conditions}</p>}
+                <button className="btn btn-primary btn-full" onClick={() => setAuthOpen(true)}>
+                  Je candidate
+                </button>
               </div>
             </div>
           ))}
