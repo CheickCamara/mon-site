@@ -36,6 +36,9 @@ type Restaurant = {
 type Offre = {
   id: number
   titre: string
+  description: string | null
+  menu: string | null
+  conditions: string | null
   contrepartie: string
   nombre_places: number
   places_restantes: number
@@ -112,9 +115,9 @@ export default function EspaceRestaurateur({ utilisateur, onRetour }: Props) {
   const ouvrirEdition = (o: Offre) => {
     setOffreEnEdition(o)
     setEditForm({
-      titre: o.titre, description: '', menu: '', valeur_indicative: o.valeur_indicative ? String(o.valeur_indicative) : '',
+      titre: o.titre, description: o.description ?? '', menu: o.menu ?? '', valeur_indicative: o.valeur_indicative ? String(o.valeur_indicative) : '',
       contrepartie: o.contrepartie, nombre_places: String(o.nombre_places),
-      tranche_min: String(o.tranche_min), tranche_max: o.tranche_max ? String(o.tranche_max) : '', conditions: '',
+      tranche_min: String(o.tranche_min), tranche_max: o.tranche_max ? String(o.tranche_max) : '', conditions: o.conditions ?? '',
     })
   }
 
