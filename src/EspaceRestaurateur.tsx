@@ -47,6 +47,8 @@ type Candidature = {
   statut: string
   date_candidature: string
   post_publie: boolean
+  lien_publication: string | null
+  capture_story: string | null
   influenceurs: { nom: string; email: string; reseau: string; abonnes: number } | null
   offres: { titre: string; contrepartie: string } | null
 }
@@ -225,8 +227,24 @@ export default function EspaceRestaurateur({ utilisateur, onRetour }: Props) {
                     </p>
                     <p style={{ color: 'var(--text-muted)', fontSize: '0.78rem', marginTop: 4 }}>
                       Le {new Date(c.date_candidature).toLocaleDateString('fr-FR')}
-                      {c.post_publie ? ' · ✅ Post publié' : ''}
                     </p>
+                    {c.post_publie && (
+                      <div style={{ marginTop: 8, display: 'flex', gap: 12, alignItems: 'center' }}>
+                        <span style={{ color: '#22c55e', fontWeight: 600, fontSize: '0.85rem' }}>✅ Publication soumise</span>
+                        {c.lien_publication && (
+                          <a href={c.lien_publication} target="_blank" rel="noreferrer"
+                            style={{ color: 'var(--primary)', fontSize: '0.82rem', fontWeight: 600 }}>
+                            🔗 Voir le post →
+                          </a>
+                        )}
+                        {c.capture_story && (
+                          <a href={c.capture_story} target="_blank" rel="noreferrer"
+                            style={{ color: 'var(--primary)', fontSize: '0.82rem', fontWeight: 600 }}>
+                            📷 Voir la story →
+                          </a>
+                        )}
+                      </div>
+                    )}
                   </div>
                   <span style={{ fontWeight: 700, fontSize: '0.85rem', color: s.color }}>{s.label}</span>
                 </div>
