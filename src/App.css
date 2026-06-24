@@ -1019,9 +1019,9 @@
   .section-pill { font-size: 13px; padding: 5px 14px; }
   .lp-stat-badge { max-width: 100%; margin: 0 16px; }
 
-  /* Bloc 1000 abonnés — retire le sticky qui coupe le bloc sur mobile */
-  .concept-badge-col { position: static !important; }
-  .concept-badge { border-radius: 16px; padding: 24px 20px; }
+  /* Bloc 1000 abonnés — retire le sticky et la largeur fixe qui coupent le bloc */
+  .concept-badge-col { position: static !important; width: 100% !important; }
+  .concept-badge { border-radius: 16px; padding: 24px 20px; width: 100%; box-sizing: border-box; }
   .badge-num { font-size: 42px; }
 
   /* Espace influenceur / restaurateur — cartes en colonne */
