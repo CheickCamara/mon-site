@@ -64,6 +64,7 @@ export default function EspaceRestaurateur({ utilisateur, onRetour }: Props) {
   const [offres, setOffres] = useState<Offre[]>([])
   const [candidatures, setCandidatures] = useState<Candidature[]>([])
   const [loading, setLoading] = useState(true)
+  const [actionLoading, setActionLoading] = useState<number | null>(null)
 
   const token = localStorage.getItem('token')
   const headers = { 'Authorization': `Bearer ${token}` }
@@ -80,6 +81,20 @@ export default function EspaceRestaurateur({ utilisateur, onRetour }: Props) {
       setLoading(false)
     }).catch(() => setLoading(false))
   }, [])
+
+  const traiterCandidature = async (id: number, statut: 'valide' | 'refuse') => {
+    setActionLoading(id)
+    try {
+      await fetch(`${API}/restaurateur/candidatures/${id}`, {
+        method: 'PUT',
+        headers: { ...headers, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ statut }),
+      })
+      setCandidatures(prev => prev.map(c => c.id === id ? { ...c, statut } : c))
+    } finally {
+      setActionLoading(null)
+    }
+  }
 
   const STATUT_RESTAURANT: Record<string, { label: string; color: string }> = {
     en_attente: { label: '⏳ En attente de validation', color: '#f59e0b' },
@@ -209,44 +224,94 @@ export default function EspaceRestaurateur({ utilisateur, onRetour }: Props) {
               </div>
             ) : candidatures.map(c => {
               const s = STATUT_CANDIDATURE[c.statut] ?? { label: c.statut, color: '#888' }
+              const reseau = c.influenceurs?.reseau === 'instagram' ? '📸 Instagram' : '🎵 TikTok'
+              const abonnes = c.influenceurs?.abonnes ? c.influenceurs.abonnes.toLocaleString('fr-FR') : '—'
               return (
                 <div key={c.id} style={{
                   background: 'var(--card-bg, var(--surface))', border: '1px solid var(--border)',
                   borderRadius: 12, padding: '20px 24px',
-                  display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12,
                 }}>
-                  <div>
-                    <p style={{ fontWeight: 700, fontSize: '1rem', marginBottom: 2 }}>
-                      {c.influenceurs?.nom ?? '—'}
-                    </p>
-                    <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                      {c.influenceurs?.reseau === 'instagram' ? '📸 Instagram' : '🎵 TikTok'} · {c.influenceurs?.abonnes?.toLocaleString('fr-FR') ?? '—'} abonnés
-                    </p>
-                    <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: 2 }}>
-                      Pour : {c.offres?.titre ?? '—'} · {CONTREPARTIE_LABEL[c.offres?.contrepartie ?? ''] ?? ''}
-                    </p>
-                    <p style={{ color: 'var(--text-muted)', fontSize: '0.78rem', marginTop: 4 }}>
-                      Le {new Date(c.date_candidature).toLocaleDateString('fr-FR')}
-                    </p>
-                    {c.post_publie && (
-                      <div style={{ marginTop: 8, display: 'flex', gap: 12, alignItems: 'center' }}>
-                        <span style={{ color: '#22c55e', fontWeight: 600, fontSize: '0.85rem' }}>✅ Publication soumise</span>
-                        {c.lien_publication && (
-                          <a href={c.lien_publication} target="_blank" rel="noreferrer"
-                            style={{ color: 'var(--primary)', fontSize: '0.82rem', fontWeight: 600 }}>
-                            🔗 Voir le post →
-                          </a>
-                        )}
-                        {c.capture_story && (
-                          <a href={c.capture_story} target="_blank" rel="noreferrer"
-                            style={{ color: 'var(--primary)', fontSize: '0.82rem', fontWeight: 600 }}>
-                            📷 Voir la story →
-                          </a>
-                        )}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
+                    {/* Infos influenceur */}
+                    <div style={{ flex: 1, minWidth: 200 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+                        <div style={{
+                          width: 40, height: 40, borderRadius: '50%',
+                          background: 'linear-gradient(135deg, var(--primary), #a78bfa)',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          color: '#fff', fontWeight: 700, fontSize: '1rem', flexShrink: 0,
+                        }}>
+                          {(c.influenceurs?.nom ?? '?')[0].toUpperCase()}
+                        </div>
+                        <div>
+                          <p style={{ fontWeight: 700, fontSize: '1rem', margin: 0 }}>{c.influenceurs?.nom ?? '—'}</p>
+                          <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem', margin: 0 }}>{c.influenceurs?.email ?? ''}</p>
+                        </div>
                       </div>
-                    )}
+                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
+                        <span style={{
+                          background: 'var(--surface)', border: '1px solid var(--border)',
+                          borderRadius: 20, padding: '2px 10px', fontSize: '0.8rem', fontWeight: 600,
+                        }}>{reseau}</span>
+                        <span style={{
+                          background: 'var(--surface)', border: '1px solid var(--border)',
+                          borderRadius: 20, padding: '2px 10px', fontSize: '0.8rem', fontWeight: 600, color: 'var(--primary)',
+                        }}>👥 {abonnes} abonnés</span>
+                      </div>
+                      <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: 2 }}>
+                        Pour : <strong>{c.offres?.titre ?? '—'}</strong> · {CONTREPARTIE_LABEL[c.offres?.contrepartie ?? ''] ?? ''}
+                      </p>
+                      <p style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>
+                        Candidature du {new Date(c.date_candidature).toLocaleDateString('fr-FR')}
+                      </p>
+                      {c.post_publie && (
+                        <div style={{ marginTop: 8, display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+                          <span style={{ color: '#22c55e', fontWeight: 600, fontSize: '0.85rem' }}>✅ Publication soumise</span>
+                          {c.lien_publication && (
+                            <a href={c.lien_publication} target="_blank" rel="noreferrer"
+                              style={{ color: 'var(--primary)', fontSize: '0.82rem', fontWeight: 600 }}>
+                              🔗 Voir le post →
+                            </a>
+                          )}
+                          {c.capture_story && (
+                            <a href={c.capture_story} target="_blank" rel="noreferrer"
+                              style={{ color: 'var(--primary)', fontSize: '0.82rem', fontWeight: 600 }}>
+                              📷 Voir la story →
+                            </a>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Statut + actions */}
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 10 }}>
+                      <span style={{ fontWeight: 700, fontSize: '0.9rem', color: s.color }}>{s.label}</span>
+                      {c.statut === 'en_attente' && (
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <button
+                            disabled={actionLoading === c.id}
+                            onClick={() => traiterCandidature(c.id, 'valide')}
+                            style={{
+                              padding: '8px 16px', borderRadius: 8, border: 'none', cursor: 'pointer',
+                              background: '#22c55e', color: '#fff', fontWeight: 700, fontSize: '0.85rem',
+                              opacity: actionLoading === c.id ? 0.6 : 1,
+                            }}>
+                            ✓ Accepter
+                          </button>
+                          <button
+                            disabled={actionLoading === c.id}
+                            onClick={() => traiterCandidature(c.id, 'refuse')}
+                            style={{
+                              padding: '8px 16px', borderRadius: 8, border: 'none', cursor: 'pointer',
+                              background: '#ef4444', color: '#fff', fontWeight: 700, fontSize: '0.85rem',
+                              opacity: actionLoading === c.id ? 0.6 : 1,
+                            }}>
+                            ✗ Refuser
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <span style={{ fontWeight: 700, fontSize: '0.85rem', color: s.color }}>{s.label}</span>
                 </div>
               )
             })}
