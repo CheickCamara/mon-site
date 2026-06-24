@@ -29,16 +29,6 @@ function useTheme() {
   return { theme, toggle: () => setTheme(t => t === 'dark' ? 'light' : 'dark') }
 }
 
-type Restaurant = {
-  id: number
-  nom: string
-  adresse: string
-  description: string
-  telephone: string
-  statut: string
-  info: string
-}
-
 type Offre = {
   id: number
   titre: string
@@ -252,18 +242,14 @@ export default function App() {
       setCandidatureEnvoyee(prev => ({ ...prev, [offreId]: 'Erreur réseau, réessaie.' }))
     }
   }
-  const [restaurants, setRestaurants] = useState<Restaurant[]>([])
   const [offres, setOffres] = useState<Offre[]>([])
   const [fetchError, setFetchError] = useState(false)
   const [fetchLoading, setFetchLoading] = useState(true)
 
   useEffect(() => {
-    Promise.all([
-      fetch('https://mon-api-rqm7.onrender.com/restaurants').then(r => r.json()),
-      fetch('https://mon-api-rqm7.onrender.com/offres').then(r => r.json()),
-    ])
-      .then(([resto, offresData]) => {
-        setRestaurants(resto)
+    fetch('https://mon-api-rqm7.onrender.com/offres')
+      .then(r => r.json())
+      .then(offresData => {
         setOffres(offresData)
         setFetchLoading(false)
       })
