@@ -994,9 +994,18 @@
   .step-connector { display: none; }
   .restaurant-grid { grid-template-columns: repeat(2, 1fr); }
   .section-title { font-size: 32px; }
+  .lp-section-influenceurs, .lp-section-restaurateurs { padding: 56px 20px; }
+  .fun-card { padding: 20px 16px; }
 }
 
 @media (max-width: 600px) {
+  /* Désactive les animations reveal sur mobile — évite les grands espaces blancs */
+  .reveal {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+
   .lp-hero-title { font-size: 34px; letter-spacing: -1px; }
   .restaurant-grid { grid-template-columns: 1fr; }
   .restaurants-header { flex-direction: column; align-items: flex-start; }
@@ -1004,4 +1013,17 @@
   .concept-badge { width: 100%; }
   .lp-hero-stats { gap: 20px; }
   .stat-divider { display: none; }
+  .lp-section-influenceurs, .lp-section-restaurateurs { padding: 48px 16px; }
+  .fun-cards-grid { grid-template-columns: 1fr; gap: 12px; }
+  .fun-card { padding: 18px 14px; }
+  .section-pill { font-size: 13px; padding: 5px 14px; }
+  .lp-stat-badge { max-width: 100%; margin: 0 16px; }
+
+  /* Bloc 1000 abonnés — retire le sticky qui coupe le bloc sur mobile */
+  .concept-badge-col { position: static !important; }
+  .concept-badge { border-radius: 16px; padding: 24px 20px; }
+  .badge-num { font-size: 42px; }
+
+  /* Espace influenceur / restaurateur — cartes en colonne */
+  .espace-cards, .offres-grid { grid-template-columns: 1fr !important; }
 }
