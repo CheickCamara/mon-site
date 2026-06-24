@@ -32,6 +32,8 @@ type Restaurant = {
   statut: string
   siret: string
   image: string | null
+  lat: number | null
+  lng: number | null
 }
 
 type Offre = {
@@ -418,6 +420,16 @@ export default function EspaceRestaurateur({ utilisateur, onRetour }: Props) {
                 {restoSuccess && (
                   <div style={{ background: '#f0fdf4', border: '1px solid #86efac', borderRadius: 10, padding: '14px 18px', color: '#166534', fontSize: '0.9rem', marginBottom: 16 }}>
                     ✅ Informations mises à jour avec succès.
+                  </div>
+                )}
+
+                {restaurant.statut !== 'en_attente' && restaurant.lat == null && (
+                  <div style={{
+                    background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 10,
+                    padding: '16px 20px', fontSize: '0.9rem', color: '#991b1b',
+                  }}>
+                    <strong>⚠️ Ton restaurant n'apparaît pas sur la carte</strong><br />
+                    Son adresse n'a pas pu être localisée automatiquement. Clique sur "Modifier les informations" et corrige l'adresse pour qu'il soit visible par les influenceurs.
                   </div>
                 )}
 
