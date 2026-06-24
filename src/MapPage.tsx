@@ -38,6 +38,8 @@ function getPhoto(description: string): string {
   return PHOTOS_PAR_CUISINE['default']
 }
 
+const API = 'https://mon-api-rqm7.onrender.com'
+
 type Restaurant = {
   id: number
   nom: string
@@ -47,6 +49,17 @@ type Restaurant = {
   statut: string
   lat: number | null
   lng: number | null
+}
+
+type Offre = {
+  id: number
+  titre: string
+  description: string
+  contrepartie: string
+  valeur_indicative: number | null
+  places_restantes: number
+  tranche_min: number | null
+  tranche_max: number | null
 }
 
 function createCustomIcon(selected: boolean) {
@@ -67,7 +80,12 @@ function createCustomIcon(selected: boolean) {
   })
 }
 
-export default function MapPage() {
+type Props = {
+  utilisateur?: { id: number; nom: string; statut?: string } | null
+  token?: string | null
+}
+
+export default function MapPage({ utilisateur, token }: Props) {
   const mapRef = useRef<HTMLDivElement>(null)
   const mapInstanceRef = useRef<L.Map | null>(null)
   const markersRef = useRef<Map<number, L.Marker>>(new Map())
@@ -75,6 +93,10 @@ export default function MapPage() {
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [search, setSearch] = useState('')
   const [restaurants, setRestaurants] = useState<Restaurant[]>([])
+  const [offres, setOffres] = useState<Offre[]>([])
+  const [loadingOffres, setLoadingOffres] = useState(false)
+  const [candidatureEnCours, setCandidatureEnCours] = useState<number | null>(null)
+  const [msgMap, setMsgMap] = useState<Record<number, string>>({})
 
   useEffect(() => {
     fetch('https://mon-api-rqm7.onrender.com/restaurants')
@@ -151,6 +173,33 @@ export default function MapPage() {
     })
   }, [avecCoords, selectedId])
 
+  useEffect(() => {
+    if (selectedId == null) { setOffres([]); return }
+    setLoadingOffres(true)
+    fetch(`${API}/offres`)
+      .then(r => r.json())
+      .then((data: (Offre & { restaurants: { id: number } })[]) => {
+        setOffres(data.filter(o => o.restaurants?.id === selectedId))
+      })
+      .finally(() => setLoadingOffres(false))
+  }, [selectedId])
+
+  async function candidater(offreId: number) {
+    if (!token) return
+    setCandidatureEnCours(offreId)
+    try {
+      const res = await fetch(`${API}/mon-espace/candidatures`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ offre_id: offreId }),
+      })
+      const data = await res.json()
+      setMsgMap(m => ({ ...m, [offreId]: res.ok ? '✅ Candidature envoyée !' : (data.error || 'Erreur') }))
+    } finally {
+      setCandidatureEnCours(null)
+    }
+  }
+
   function focusRestaurant(r: Restaurant) {
     if (!r.lat || !r.lng) return
     setSelectedId(r.id)
@@ -216,11 +265,34 @@ export default function MapPage() {
               <div className="map-popup__meta">{selected.description}</div>
               <h3 className="map-popup__name">{selected.nom}</h3>
               <p className="map-popup__address">📍 {selected.adresse}</p>
-              {selected.telephone && <p className="map-popup__desc">{selected.telephone}</p>}
-              {selected.statut && <p className="map-popup__desc">Statut : {selected.statut}</p>}
-              <div className="map-popup__footer">
-                <button className="btn-candidate">Je candidate</button>
+
+              <div className="map-popup__offres-title">
+                {loadingOffres ? 'Chargement des offres…' : offres.length === 0 ? 'Aucune offre disponible' : `${offres.length} offre${offres.length > 1 ? 's' : ''} disponible${offres.length > 1 ? 's' : ''}`}
               </div>
+
+              {offres.map(o => (
+                <div key={o.id} className="map-offre-card">
+                  <div className="map-offre-titre">{o.titre}</div>
+                  <div className="map-offre-meta">
+                    {o.valeur_indicative && <span>🍽 {o.valeur_indicative} €</span>}
+                    <span>📸 {o.contrepartie}</span>
+                    <span>👥 {o.places_restantes} place{o.places_restantes > 1 ? 's' : ''}</span>
+                  </div>
+                  {msgMap[o.id] ? (
+                    <p style={{ fontSize: 13, color: '#22c55e', margin: '6px 0 0' }}>{msgMap[o.id]}</p>
+                  ) : utilisateur && token ? (
+                    <button
+                      className="btn-candidate"
+                      disabled={candidatureEnCours === o.id}
+                      onClick={() => candidater(o.id)}
+                    >
+                      {candidatureEnCours === o.id ? 'Envoi…' : 'Candidater →'}
+                    </button>
+                  ) : (
+                    <p style={{ fontSize: 12, color: '#9ca3af', margin: '6px 0 0' }}>Connecte-toi pour candidater</p>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
         )}

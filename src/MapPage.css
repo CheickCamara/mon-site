@@ -326,6 +326,40 @@
   box-shadow: 0 4px 12px rgba(170,59,255,0.35);
 }
 .btn-candidate:hover { opacity: 0.85; transform: translateY(-1px); }
+.btn-candidate:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+.map-popup__offres-title {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--accent);
+  margin: 10px 0 8px;
+}
+
+.map-offre-card {
+  background: color-mix(in srgb, var(--accent) 6%, var(--bg));
+  border: 1px solid color-mix(in srgb, var(--accent) 20%, transparent);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+
+.map-offre-titre {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.map-offre-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
 
 /* ══════════════════════════════════════
    RESPONSIVE

@@ -865,7 +865,7 @@ export default function App() {
           </button>
         </div>
       </nav>
-      <MapPage />
+      <MapPage utilisateur={utilisateur} token={token} />
     </div>
   )
 
