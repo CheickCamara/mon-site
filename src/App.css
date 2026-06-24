@@ -328,7 +328,7 @@
   pointer-events: none;
 }
 
-.lp-hero > * { position: relative; z-index: 1; }
+.lp-hero > *:not(.lp-hero-blob) { position: relative; z-index: 1; }
 
 /* Override couleurs pour le hero sombre */
 .lp-hero .lp-hero-badge {
@@ -351,7 +351,7 @@
   background: rgba(255,255,255,0.15);
 }
 
-.lp-hero > * { position: relative; z-index: 1; }
+
 
 .lp-hero-badge {
   display: inline-flex;
