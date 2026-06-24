@@ -417,6 +417,10 @@ function MonEspace({ utilisateur, onRetour, onNomChange }: { utilisateur: Utilis
   const soumettreLien = async (candId: number) => {
     const lien = liens[candId]
     if (!lien) return
+    if (!/instagram\.com|tiktok\.com/i.test(lien)) {
+      setPubMsg(prev => ({ ...prev, [candId]: '❌ Le lien doit provenir d\'Instagram ou TikTok.' }))
+      return
+    }
     const r = await fetch(`${API}/mon-espace/candidatures/${candId}/publication`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
@@ -712,7 +716,7 @@ function MonEspace({ utilisateur, onRetour, onNomChange }: { utilisateur: Utilis
                               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                                 <input
                                   type="url"
-                                  placeholder={c.offres?.contrepartie === 'reel' ? 'https://www.instagram.com/reel/...' : 'https://www.instagram.com/p/...'}
+                                  placeholder="https://www.instagram.com/p/... ou https://www.tiktok.com/..."
                                   value={liens[c.id] ?? ''}
                                   onChange={e => setLiens(prev => ({ ...prev, [c.id]: e.target.value }))}
                                   style={{ flex: 1, padding: '8px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)', fontSize: '0.9rem', minWidth: 200 }}
