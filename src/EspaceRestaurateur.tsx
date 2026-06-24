@@ -7,6 +7,7 @@ const STATUT_CANDIDATURE: Record<string, { label: string; color: string }> = {
   en_attente: { label: '⏳ En attente', color: '#f59e0b' },
   valide:     { label: '✅ Acceptée',   color: '#22c55e' },
   refuse:     { label: '❌ Refusée',    color: '#ef4444' },
+  honoree:    { label: '🏆 Honorée',   color: '#7c3aed' },
 }
 
 const CONTREPARTIE_LABEL: Record<string, string> = {
@@ -450,15 +451,30 @@ export default function EspaceRestaurateur({ utilisateur, onRetour }: Props) {
                         </div>
                       )}
                       {c.statut === 'valide' && (
-                        <button
-                          onClick={() => setMessagerieCand({ id: c.id, nom: c.influenceurs?.nom ?? 'Influenceur' })}
-                          style={{
-                            padding: '6px 12px', borderRadius: 20, border: '1px solid var(--primary)',
-                            background: 'transparent', color: 'var(--primary)', cursor: 'pointer',
-                            fontWeight: 600, fontSize: '0.8rem',
-                          }}>
-                          💬 Message
-                        </button>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-end' }}>
+                          <button
+                            onClick={() => setMessagerieCand({ id: c.id, nom: c.influenceurs?.nom ?? 'Influenceur' })}
+                            style={{
+                              padding: '6px 12px', borderRadius: 20, border: '1px solid var(--primary)',
+                              background: 'transparent', color: 'var(--primary)', cursor: 'pointer',
+                              fontWeight: 600, fontSize: '0.8rem',
+                            }}>
+                            💬 Message
+                          </button>
+                          {c.post_publie && (
+                            <button
+                              disabled={actionLoading === c.id}
+                              onClick={() => traiterCandidature(c.id, 'honoree')}
+                              style={{
+                                padding: '6px 12px', borderRadius: 20, border: 'none',
+                                background: '#7c3aed', color: '#fff', cursor: 'pointer',
+                                fontWeight: 600, fontSize: '0.8rem',
+                                opacity: actionLoading === c.id ? 0.6 : 1,
+                              }}>
+                              🏆 Confirmer la publication
+                            </button>
+                          )}
+                        </div>
                       )}
                     </div>
                   </div>

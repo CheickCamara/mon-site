@@ -258,6 +258,7 @@ const STATUT_CANDIDATURE: Record<string, { label: string; color: string }> = {
   en_attente: { label: '⏳ En attente de validation', color: '#f59e0b' },
   valide:     { label: '✅ Acceptée', color: '#22c55e' },
   refuse:     { label: '❌ Refusée', color: '#ef4444' },
+  honoree:    { label: '🏆 Collaboration honorée', color: '#7c3aed' },
 }
 
 const CONTREPARTIE_LABEL: Record<string, string> = {
