@@ -224,19 +224,70 @@ type MaCandidature = {
   } | null
 }
 
-function MonEspace({ utilisateur, onRetour }: { utilisateur: Utilisateur; onRetour: () => void }) {
+type Profil = {
+  id: number
+  nom: string
+  email: string
+  reseau: string
+  abonnes: number
+  statut: string
+  date_inscription: string
+}
+
+function MonEspace({ utilisateur, onRetour, onNomChange }: { utilisateur: Utilisateur; onRetour: () => void; onNomChange: (nom: string) => void }) {
+  const [onglet, setOnglet] = useState<'candidatures' | 'profil'>('candidatures')
   const [candidatures, setCandidatures] = useState<MaCandidature[]>([])
-  const [loading, setLoading] = useState(true)
+  const [loadingCand, setLoadingCand] = useState(true)
+  const [profil, setProfil] = useState<Profil | null>(null)
+  const [form, setForm] = useState({ nom: '', reseau: '', abonnes: '', mot_de_passe: '' })
+  const [msg, setMsg] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  const token = localStorage.getItem('token')
 
   useEffect(() => {
-    const token = localStorage.getItem('token')
-    fetch(`${API}/mon-espace/candidatures`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    })
-      .then(r => r.json())
-      .then(data => { setCandidatures(data); setLoading(false) })
-      .catch(() => setLoading(false))
+    fetch(`${API}/mon-espace/candidatures`, { headers: { 'Authorization': `Bearer ${token}` } })
+      .then(r => r.json()).then(data => { setCandidatures(data); setLoadingCand(false) })
+      .catch(() => setLoadingCand(false))
   }, [])
+
+  useEffect(() => {
+    if (onglet !== 'profil' || profil) return
+    fetch(`${API}/mon-espace/profil`, { headers: { 'Authorization': `Bearer ${token}` } })
+      .then(r => r.json()).then(data => {
+        setProfil(data)
+        setForm({ nom: data.nom, reseau: data.reseau, abonnes: String(data.abonnes), mot_de_passe: '' })
+      })
+  }, [onglet])
+
+  const sauvegarder = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setSaving(true)
+    setMsg('')
+    const body: Record<string, string | number> = { nom: form.nom, reseau: form.reseau, abonnes: Number(form.abonnes) }
+    if (form.mot_de_passe) body.mot_de_passe = form.mot_de_passe
+    const r = await fetch(`${API}/mon-espace/profil`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify(body),
+    })
+    const data = await r.json()
+    setSaving(false)
+    if (r.ok) {
+      setMsg('✅ Profil mis à jour !')
+      onNomChange(form.nom)
+      const stored = JSON.parse(localStorage.getItem('utilisateur') || '{}')
+      localStorage.setItem('utilisateur', JSON.stringify({ ...stored, nom: form.nom }))
+    } else {
+      setMsg(`❌ ${data.error}`)
+    }
+  }
+
+  const STATUT_PROFIL: Record<string, { label: string; color: string }> = {
+    en_attente: { label: '⏳ En attente de validation', color: '#f59e0b' },
+    valide:     { label: '✅ Compte validé', color: '#22c55e' },
+    refuse:     { label: '❌ Compte refusé', color: '#ef4444' },
+  }
 
   return (
     <div style={{ minHeight: '100svh', background: 'var(--bg)', padding: '0 0 60px' }}>
@@ -249,62 +300,115 @@ function MonEspace({ utilisateur, onRetour }: { utilisateur: Utilisateur; onReto
         <h1 style={{ fontSize: '1.8rem', fontWeight: 700, marginBottom: 4 }}>
           Bonjour {utilisateur.nom} 👋
         </h1>
-        <p style={{ color: 'var(--text-muted)', marginBottom: 40 }}>Voici le suivi de tes candidatures</p>
 
-        {loading && <p>Chargement…</p>}
-
-        {!loading && candidatures.length === 0 && (
-          <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-muted)' }}>
-            <p style={{ fontSize: '2rem' }}>🍽️</p>
-            <p>Tu n'as pas encore candidaté à une offre.</p>
-            <button className="btn btn-primary" style={{ marginTop: 16 }} onClick={onRetour}>
-              Voir les offres
+        {/* Onglets */}
+        <div style={{ display: 'flex', gap: 8, margin: '24px 0 32px', borderBottom: '2px solid var(--border)', paddingBottom: 0 }}>
+          {(['candidatures', 'profil'] as const).map(o => (
+            <button key={o} onClick={() => setOnglet(o)} style={{
+              background: 'none', border: 'none', cursor: 'pointer',
+              padding: '8px 16px', fontWeight: 600, fontSize: '0.95rem',
+              color: onglet === o ? 'var(--primary)' : 'var(--text-muted)',
+              borderBottom: onglet === o ? '2px solid var(--primary)' : '2px solid transparent',
+              marginBottom: -2,
+            }}>
+              {o === 'candidatures' ? '📋 Mes candidatures' : '👤 Mon profil'}
             </button>
-          </div>
+          ))}
+        </div>
+
+        {/* Candidatures */}
+        {onglet === 'candidatures' && (
+          <>
+            {loadingCand && <p>Chargement…</p>}
+            {!loadingCand && candidatures.length === 0 && (
+              <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-muted)' }}>
+                <p style={{ fontSize: '2rem' }}>🍽️</p>
+                <p>Tu n'as pas encore candidaté à une offre.</p>
+                <button className="btn btn-primary" style={{ marginTop: 16 }} onClick={onRetour}>Voir les offres</button>
+              </div>
+            )}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {candidatures.map(c => {
+                const statut = STATUT_CANDIDATURE[c.statut] ?? { label: c.statut, color: '#888' }
+                return (
+                  <div key={c.id} style={{
+                    background: 'var(--card-bg, var(--surface))', border: '1px solid var(--border)',
+                    borderRadius: 12, padding: '20px 24px', display: 'flex',
+                    justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap',
+                  }}>
+                    <div>
+                      <p style={{ fontWeight: 700, fontSize: '1rem', marginBottom: 4 }}>{c.offres?.titre ?? '—'}</p>
+                      <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                        🍽️ {c.offres?.restaurants?.nom ?? '—'} · {c.offres?.restaurants?.adresse ?? ''}
+                      </p>
+                      <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: 4 }}>
+                        {CONTREPARTIE_LABEL[c.offres?.contrepartie ?? ''] ?? ''}
+                        {c.offres?.valeur_indicative ? ` · Valeur ${c.offres.valeur_indicative} €` : ''}
+                      </p>
+                      <p style={{ color: 'var(--text-muted)', fontSize: '0.78rem', marginTop: 4 }}>
+                        Candidaté le {new Date(c.date_candidature).toLocaleDateString('fr-FR')}
+                      </p>
+                    </div>
+                    <span style={{ fontWeight: 600, fontSize: '0.85rem', color: statut.color, whiteSpace: 'nowrap' }}>
+                      {statut.label}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+          </>
         )}
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {candidatures.map(c => {
-            const statut = STATUT_CANDIDATURE[c.statut] ?? { label: c.statut, color: '#888' }
-            return (
-              <div key={c.id} style={{
-                background: 'var(--card-bg, var(--surface))',
-                border: '1px solid var(--border)',
-                borderRadius: 12,
-                padding: '20px 24px',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                gap: 16,
-                flexWrap: 'wrap',
+        {/* Profil */}
+        {onglet === 'profil' && (
+          <div style={{ maxWidth: 480 }}>
+            {profil && (
+              <div style={{
+                background: 'var(--card-bg, var(--surface))', border: '1px solid var(--border)',
+                borderRadius: 12, padding: '16px 20px', marginBottom: 24,
+                display: 'flex', alignItems: 'center', gap: 12,
               }}>
+                <span style={{ fontSize: '1.5rem' }}>📊</span>
                 <div>
-                  <p style={{ fontWeight: 700, fontSize: '1rem', marginBottom: 4 }}>
-                    {c.offres?.titre ?? '—'}
-                  </p>
-                  <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                    🍽️ {c.offres?.restaurants?.nom ?? '—'} · {c.offres?.restaurants?.adresse ?? ''}
-                  </p>
-                  <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: 4 }}>
-                    {CONTREPARTIE_LABEL[c.offres?.contrepartie ?? ''] ?? ''}
-                    {c.offres?.valeur_indicative ? ` · Valeur ${c.offres.valeur_indicative} €` : ''}
-                  </p>
-                  <p style={{ color: 'var(--text-muted)', fontSize: '0.78rem', marginTop: 4 }}>
-                    Candidaté le {new Date(c.date_candidature).toLocaleDateString('fr-FR')}
+                  <p style={{ fontWeight: 600, fontSize: '0.9rem' }}>Statut du compte</p>
+                  <p style={{ color: STATUT_PROFIL[profil.statut]?.color ?? '#888', fontWeight: 700 }}>
+                    {STATUT_PROFIL[profil.statut]?.label ?? profil.statut}
                   </p>
                 </div>
-                <span style={{
-                  fontWeight: 600,
-                  fontSize: '0.85rem',
-                  color: statut.color,
-                  whiteSpace: 'nowrap',
-                }}>
-                  {statut.label}
-                </span>
               </div>
-            )
-          })}
-        </div>
+            )}
+
+            <form onSubmit={sauvegarder} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <label style={{ display: 'flex', flexDirection: 'column', gap: 6, fontWeight: 600, fontSize: '0.9rem' }}>
+                Prénom / Pseudo
+                <input value={form.nom} onChange={e => setForm(f => ({ ...f, nom: e.target.value }))}
+                  style={{ padding: '10px 14px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)', fontSize: '1rem' }} />
+              </label>
+              <label style={{ display: 'flex', flexDirection: 'column', gap: 6, fontWeight: 600, fontSize: '0.9rem' }}>
+                Réseau principal
+                <select value={form.reseau} onChange={e => setForm(f => ({ ...f, reseau: e.target.value }))}
+                  style={{ padding: '10px 14px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)', fontSize: '1rem' }}>
+                  <option value="instagram">Instagram</option>
+                  <option value="tiktok">TikTok</option>
+                </select>
+              </label>
+              <label style={{ display: 'flex', flexDirection: 'column', gap: 6, fontWeight: 600, fontSize: '0.9rem' }}>
+                Nombre d'abonnés
+                <input type="number" min="1000" value={form.abonnes} onChange={e => setForm(f => ({ ...f, abonnes: e.target.value }))}
+                  style={{ padding: '10px 14px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)', fontSize: '1rem' }} />
+              </label>
+              <label style={{ display: 'flex', flexDirection: 'column', gap: 6, fontWeight: 600, fontSize: '0.9rem' }}>
+                Nouveau mot de passe <span style={{ fontWeight: 400, color: 'var(--text-muted)' }}>(laisser vide pour ne pas changer)</span>
+                <input type="password" placeholder="••••••••" value={form.mot_de_passe} onChange={e => setForm(f => ({ ...f, mot_de_passe: e.target.value }))}
+                  style={{ padding: '10px 14px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)', fontSize: '1rem' }} />
+              </label>
+              {msg && <p style={{ color: msg.startsWith('✅') ? '#22c55e' : '#ef4444', fontWeight: 600 }}>{msg}</p>}
+              <button type="submit" className="btn btn-primary" disabled={saving}>
+                {saving ? 'Enregistrement…' : 'Enregistrer les modifications'}
+              </button>
+            </form>
+          </div>
+        )}
       </div>
     </div>
   )
@@ -361,7 +465,11 @@ export default function App() {
   }, [])
 
   if (page === 'espace' && utilisateur) return (
-    <MonEspace utilisateur={utilisateur} onRetour={() => setPage('home')} />
+    <MonEspace
+      utilisateur={utilisateur}
+      onRetour={() => setPage('home')}
+      onNomChange={nom => setUtilisateur(u => u ? { ...u, nom } : u)}
+    />
   )
 
   if (page === 'map') return (
