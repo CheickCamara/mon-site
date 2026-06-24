@@ -83,6 +83,8 @@ type Utilisateur = {
 function AuthModal({ onClose, onConnexion }: { onClose: () => void; onConnexion: (u: Utilisateur) => void }) {
   const [tab, setTab] = useState<'login' | 'influenceur' | 'restaurateur'>('login')
   const [inscriptionOk, setInscriptionOk] = useState(false)
+  const [vueMdp, setVueMdp] = useState<'connexion' | 'oublie' | 'ok'>('connexion')
+  const [emailOublie, setEmailOublie] = useState('')
   const [form, setForm] = useState({ email: '', password: '', name: '', network: '', followers: '' })
   const [resto, setResto] = useState({ nom: '', email: '', mot_de_passe: '', nom_etablissement: '', adresse: '', siret: '', telephone: '' })
   const [erreur, setErreur] = useState('')
@@ -184,6 +186,7 @@ function AuthModal({ onClose, onConnexion }: { onClose: () => void; onConnexion:
         </div>
 
         {tab === 'login' && (
+          {vueMdp === 'connexion' && (
           <form className="auth-form" onSubmit={handleConnexion}>
             <p className="auth-subtitle">Content de te revoir 👋</p>
             <label>Adresse e-mail
@@ -192,15 +195,46 @@ function AuthModal({ onClose, onConnexion }: { onClose: () => void; onConnexion:
             <label>Mot de passe
               <input type="password" placeholder="••••••••" value={form.password} onChange={set('password')} required />
             </label>
+            <button type="button" className="auth-forgot" onClick={() => { setVueMdp('oublie'); setErreur('') }}>
+              Mot de passe oublié ?
+            </button>
             {erreur && <p className="auth-error">{erreur}</p>}
             <button type="submit" className="btn btn-primary btn-full auth-submit" disabled={loading}>
               {loading ? 'Connexion…' : 'Se connecter'}
             </button>
             <p className="auth-terms" style={{ textAlign: 'center' }}>
               Pas encore de compte ?{' '}
-              <button type="button" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--primary)', fontWeight: 600 }} onClick={() => changeTab('influenceur')}>S'inscrire</button>
+              <button type="button" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--accent)', fontWeight: 600 }} onClick={() => changeTab('influenceur')}>S'inscrire</button>
             </p>
           </form>
+          )}
+
+          {vueMdp === 'oublie' && (
+          <form className="auth-form" onSubmit={async e => {
+            e.preventDefault(); setLoading(true)
+            await fetch(`${API}/auth/mot-de-passe-oublie`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: emailOublie }) })
+            setLoading(false); setVueMdp('ok')
+          }}>
+            <p className="auth-subtitle">🔑 Mot de passe oublié</p>
+            <p style={{ fontSize: '0.88rem', color: 'var(--text)', marginBottom: 4 }}>Entre ton adresse email et nous t'enverrons un lien de réinitialisation.</p>
+            <label>Adresse e-mail
+              <input type="email" placeholder="toi@exemple.com" value={emailOublie} onChange={e => setEmailOublie(e.target.value)} required />
+            </label>
+            <button type="submit" className="btn btn-primary btn-full auth-submit" disabled={loading}>
+              {loading ? 'Envoi…' : 'Envoyer le lien'}
+            </button>
+            <button type="button" className="auth-forgot" onClick={() => setVueMdp('connexion')}>← Retour à la connexion</button>
+          </form>
+          )}
+
+          {vueMdp === 'ok' && (
+          <div style={{ textAlign: 'center', padding: '24px 0' }}>
+            <p style={{ fontSize: '2rem', marginBottom: 12 }}>📬</p>
+            <p style={{ fontWeight: 700, marginBottom: 8 }}>Email envoyé !</p>
+            <p style={{ fontSize: '0.88rem', color: 'var(--text)', marginBottom: 20 }}>Si un compte existe avec cette adresse, tu recevras un lien valable 1 heure. Vérifie aussi tes spams.</p>
+            <button type="button" className="auth-forgot" onClick={() => { setVueMdp('connexion'); setEmailOublie('') }}>← Retour à la connexion</button>
+          </div>
+          )}
         )}
 
         {tab === 'influenceur' && (
@@ -684,15 +718,77 @@ function MonEspace({ utilisateur, onRetour, onNomChange }: { utilisateur: Utilis
   )
 }
 
+function ResetMotDePasse({ token, onRetour }: { token: string; onRetour: () => void }) {
+  const [mdp, setMdp] = useState('')
+  const [mdp2, setMdp2] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [msg, setMsg] = useState('')
+  const [erreur, setErreur] = useState('')
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (mdp !== mdp2) { setErreur('Les mots de passe ne correspondent pas'); return }
+    if (mdp.length < 6) { setErreur('Minimum 6 caractères'); return }
+    setLoading(true); setErreur('')
+    const r = await fetch(`${API}/auth/reset-mot-de-passe`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, nouveau_mot_de_passe: mdp }),
+    })
+    const data = await r.json()
+    setLoading(false)
+    if (r.ok) setMsg('✅ Mot de passe mis à jour ! Tu peux te connecter.')
+    else setErreur(data.error)
+  }
+
+  return (
+    <div style={{ minHeight: '100svh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #1a0533, #2d0a4e)', padding: 16 }}>
+      <div style={{ background: '#fff', borderRadius: 20, padding: '40px 36px', width: '100%', maxWidth: 400, boxShadow: '0 24px 60px rgba(0,0,0,0.3)' }}>
+        <h2 style={{ fontWeight: 800, fontSize: '1.4rem', marginBottom: 8, color: '#1a0533' }}>🔑 Nouveau mot de passe</h2>
+        <p style={{ color: '#7c6e8a', fontSize: '0.9rem', marginBottom: 24 }}>Choisis un nouveau mot de passe pour ton compte.</p>
+        {msg ? (
+          <div style={{ textAlign: 'center' }}>
+            <p style={{ color: '#22c55e', fontWeight: 700, marginBottom: 20 }}>{msg}</p>
+            <button className="btn btn-primary" onClick={onRetour} style={{ width: '100%' }}>Retour à l'accueil</button>
+          </div>
+        ) : (
+          <form style={{ display: 'flex', flexDirection: 'column', gap: 14 }} onSubmit={handleSubmit}>
+            <label style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: '0.85rem', fontWeight: 600 }}>
+              Nouveau mot de passe
+              <input type="password" placeholder="••••••••" value={mdp} onChange={e => setMdp(e.target.value)} required
+                style={{ padding: '11px 14px', borderRadius: 10, border: '1px solid #ddd', fontSize: '0.95rem', outline: 'none' }} />
+            </label>
+            <label style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: '0.85rem', fontWeight: 600 }}>
+              Confirmer le mot de passe
+              <input type="password" placeholder="••••••••" value={mdp2} onChange={e => setMdp2(e.target.value)} required
+                style={{ padding: '11px 14px', borderRadius: 10, border: '1px solid #ddd', fontSize: '0.95rem', outline: 'none' }} />
+            </label>
+            {erreur && <p style={{ color: '#ef4444', fontSize: '0.85rem', fontWeight: 600 }}>{erreur}</p>}
+            <button type="submit" className="btn btn-primary" disabled={loading} style={{ width: '100%', marginTop: 4 }}>
+              {loading ? 'Mise à jour…' : 'Enregistrer le nouveau mot de passe'}
+            </button>
+          </form>
+        )}
+      </div>
+    </div>
+  )
+}
+
 export default function App() {
   const { theme, toggle } = useTheme()
-  const [page, setPage] = useState<'home' | 'map' | 'espace' | 'restaurateur'>('home')
+  const [page, setPage] = useState<'home' | 'map' | 'espace' | 'restaurateur' | 'reset'>('home')
+  const [resetToken, setResetToken] = useState('')
   const [authOpen, setAuthOpen] = useState(false)
   const [utilisateur, setUtilisateur] = useState<Utilisateur | null>(() => {
     try { return JSON.parse(localStorage.getItem('utilisateur') || 'null') } catch { return null }
   })
   const [candidatureEnvoyee, setCandidatureEnvoyee] = useState<Record<number, string>>({})
   useScrollReveal()
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const token = params.get('reset_token')
+    if (token) { setResetToken(token); setPage('reset') }
+  }, [])
 
   const deconnexion = () => {
     localStorage.removeItem('token')
@@ -733,6 +829,10 @@ export default function App() {
       })
       .catch(() => { setFetchError(true); setFetchLoading(false) })
   }, [])
+
+  if (page === 'reset') return (
+    <ResetMotDePasse token={resetToken} onRetour={() => { setPage('home'); window.history.replaceState({}, '', '/') }} />
+  )
 
   if (page === 'restaurateur') return (
     <InscriptionRestaurateur
