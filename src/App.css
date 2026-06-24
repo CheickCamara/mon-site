@@ -260,41 +260,95 @@
 /* ══════════════════════════════════════
    HERO
 ══════════════════════════════════════ */
+@keyframes blobMove1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33%       { transform: translate(40px, -30px) scale(1.1); }
+  66%       { transform: translate(-20px, 20px) scale(0.95); }
+}
+@keyframes blobMove2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33%       { transform: translate(-50px, 20px) scale(1.05); }
+  66%       { transform: translate(30px, -40px) scale(1.1); }
+}
+@keyframes blobMove3 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50%       { transform: translate(20px, 30px) scale(1.08); }
+}
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
 .lp-hero {
-  padding: 100px 48px 80px;
+  padding: 110px 48px 90px;
   display: flex;
   flex-direction: column;
   gap: 28px;
-  border-bottom: 1px solid var(--border);
   position: relative;
   overflow: hidden;
+  background: linear-gradient(135deg, #1a0533 0%, #2d0a4e 40%, #1a1a3e 100%);
 }
 
-/* Orbes de fond animés */
-.lp-hero::before,
-.lp-hero::after {
-  content: '';
+/* Blobs colorés animés */
+.lp-hero-blob {
   position: absolute;
   border-radius: 50%;
-  filter: blur(80px);
+  filter: blur(70px);
   z-index: 0;
   pointer-events: none;
 }
-.lp-hero::before {
-  width: 500px;
-  height: 500px;
-  background: radial-gradient(circle, rgba(170,59,255,0.18), transparent 70%);
-  top: -100px;
-  right: -100px;
-  animation: float 8s ease-in-out infinite;
+.lp-hero-blob-1 {
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, rgba(170,59,255,0.5), transparent 70%);
+  top: -150px; right: -100px;
+  animation: blobMove1 12s ease-in-out infinite;
 }
-.lp-hero::after {
-  width: 350px;
-  height: 350px;
-  background: radial-gradient(circle, rgba(255,107,157,0.12), transparent 70%);
-  bottom: -50px;
-  left: 10%;
-  animation: float 10s ease-in-out infinite reverse;
+.lp-hero-blob-2 {
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, rgba(255,107,157,0.4), transparent 70%);
+  bottom: -80px; left: 5%;
+  animation: blobMove2 15s ease-in-out infinite;
+}
+.lp-hero-blob-3 {
+  width: 300px; height: 300px;
+  background: radial-gradient(circle, rgba(255,179,71,0.35), transparent 70%);
+  top: 30%; left: 45%;
+  animation: blobMove3 10s ease-in-out infinite;
+}
+
+/* Grille déco */
+.lp-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+  background-size: 60px 60px;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.lp-hero > * { position: relative; z-index: 1; }
+
+/* Override couleurs pour le hero sombre */
+.lp-hero .lp-hero-badge {
+  color: #e2b4ff;
+  background: rgba(170,59,255,0.2);
+  border-color: rgba(170,59,255,0.4);
+}
+.lp-hero .lp-hero-title { color: #fff; }
+.lp-hero .lp-hero-sub { color: rgba(255,255,255,0.75); }
+.lp-hero .stat-num { color: #fff; }
+.lp-hero .stat span:last-child { color: rgba(255,255,255,0.6); }
+.lp-hero .stat-divider { background: rgba(255,255,255,0.15); }
+.lp-hero .btn-ghost {
+  color: #fff;
+  border-color: rgba(255,255,255,0.3);
+  background: rgba(255,255,255,0.08);
+}
+.lp-hero .btn-ghost:hover {
+  border-color: rgba(255,255,255,0.6);
+  background: rgba(255,255,255,0.15);
 }
 
 .lp-hero > * { position: relative; z-index: 1; }
@@ -704,6 +758,72 @@
   color: var(--text);
   margin: 0;
   font-weight: 500;
+}
+
+/* ══════════════════════════════════════
+   SECTIONS COLORÉES
+══════════════════════════════════════ */
+.lp-section-influenceurs {
+  padding: 90px 48px;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #f5f0ff 0%, #fce7f3 100%);
+}
+.lp-section-restaurateurs {
+  padding: 90px 48px;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #fff7ed 0%, #fef3c7 100%);
+}
+
+.fun-card {
+  background: #fff;
+  border-radius: 20px;
+  padding: 28px 22px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.07);
+  transition: transform 0.3s cubic-bezier(.22,1,.36,1), box-shadow 0.3s;
+  border: 2px solid transparent;
+}
+.fun-card:hover {
+  transform: translateY(-8px) rotate(-1deg);
+  box-shadow: 0 16px 40px rgba(0,0,0,0.12);
+}
+.fun-card-icon {
+  font-size: 2.4rem;
+  margin-bottom: 14px;
+  display: block;
+  animation: float 4s ease-in-out infinite;
+}
+.fun-card:nth-child(2) .fun-card-icon { animation-delay: 0.5s; }
+.fun-card:nth-child(3) .fun-card-icon { animation-delay: 1s; }
+.fun-card:nth-child(4) .fun-card-icon { animation-delay: 1.5s; }
+
+.fun-card-influenceur { border-color: rgba(170,59,255,0.2); }
+.fun-card-influenceur:hover { border-color: rgba(170,59,255,0.5); }
+.fun-card-restaurateur { border-color: rgba(245,158,11,0.2); }
+.fun-card-restaurateur:hover { border-color: rgba(245,158,11,0.5); }
+
+.section-pill-influenceur {
+  display: inline-block;
+  background: linear-gradient(135deg, #7c3aed, #c084fc);
+  color: #fff;
+  border-radius: 100px;
+  padding: 6px 20px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 16px rgba(124,58,237,0.3);
+}
+.section-pill-restaurateur {
+  display: inline-block;
+  background: linear-gradient(135deg, #f59e0b, #fbbf24);
+  color: #fff;
+  border-radius: 100px;
+  padding: 6px 20px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 16px rgba(245,158,11,0.3);
 }
 
 /* ══════════════════════════════════════

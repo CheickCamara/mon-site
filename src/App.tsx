@@ -792,17 +792,20 @@ export default function App() {
       {/* HERO */}
       {/* HERO */}
       <header className="lp-hero">
-        <div className="lp-hero-badge">Instagram · TikTok · Restauration</div>
+        <div className="lp-hero-blob lp-hero-blob-1" />
+        <div className="lp-hero-blob lp-hero-blob-2" />
+        <div className="lp-hero-blob lp-hero-blob-3" />
+        <div className="lp-hero-badge">✨ Instagram · TikTok · Restauration</div>
         <h1 className="lp-hero-title">
-          La plateforme qui connecte<br /><span className="highlight">influenceurs</span> et <span className="highlight">restaurants</span>
+          Mange gratuitement.<br /><span className="highlight">Crée du contenu.</span>
         </h1>
         <p className="lp-hero-sub">
-          Pop Fluence met en relation les créateurs de contenu et les restaurateurs autour d'un échange simple :
-          un repas dégustation offert contre une publication authentique. Zéro agence, zéro contrat compliqué.
+          Pop Fluence connecte les créateurs de contenu avec les restaurants qui cherchent de la visibilité.
+          Un repas offert contre une publication authentique. Sans agence, sans contrat compliqué.
         </p>
         <div className="lp-hero-cta">
-          <a href="#influenceurs" className="btn btn-primary">Je suis influenceur</a>
-          <a href="#restaurateurs" className="btn btn-ghost">Je suis restaurateur</a>
+          <a href="#influenceurs" className="btn btn-primary">🎬 Je suis influenceur</a>
+          <a href="#restaurateurs" className="btn btn-ghost">🍽️ Je suis restaurateur</a>
         </div>
         <div className="lp-hero-stats">
           <div className="stat"><span className="stat-num">0 €</span><span>Frais d'inscription</span></div>
@@ -870,67 +873,63 @@ export default function App() {
       </section>
 
       {/* POUR LES INFLUENCEURS */}
-      <section id="influenceurs" style={{ padding: '80px 20px', background: 'var(--surface)' }}>
-        <div style={{ maxWidth: 900, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 48 }}>
-            <span style={{ background: 'var(--primary)', color: '#fff', borderRadius: 20, padding: '4px 16px', fontSize: '0.85rem', fontWeight: 700 }}>Pour les influenceurs</span>
-            <h2 className="section-title" style={{ marginTop: 16 }}>Mange gratuitement.<br />Crée du contenu.</h2>
-            <p style={{ color: 'var(--text-muted)', maxWidth: 560, margin: '0 auto', lineHeight: 1.7 }}>
-              Tu es créateur de contenu food ou lifestyle sur Instagram ou TikTok ? Accède à des collaborations réelles
-              près de chez toi, sans démarcher, avec une contrepartie claire dès le départ.
+      <section id="influenceurs" className="lp-section-influenceurs">
+        <div style={{ maxWidth: 900, margin: '0 auto', position: 'relative', zIndex: 1 }}>
+          <div style={{ textAlign: 'center', marginBottom: 52 }}>
+            <span className="section-pill-influenceur">🎬 Pour les influenceurs</span>
+            <h2 className="section-title" style={{ marginTop: 0, color: '#2d0a4e' }}>Accède à des collab' réelles.<br />Mange gratuitement.</h2>
+            <p style={{ color: '#5b4d6e', maxWidth: 560, margin: '0 auto', lineHeight: 1.7, fontSize: '1.05rem' }}>
+              Tu crées du contenu food ou lifestyle ? Trouve des restaurants qui veulent te recevoir
+              près de chez toi, sans démarcher, avec les conditions claires dès le départ.
             </p>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 20, marginBottom: 40 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 20, marginBottom: 44 }}>
             {[
-              { icon: '📍', title: 'Offres géolocalisées', desc: 'Trouve les restaurants ouverts à une collaboration autour de toi, sans démarcher.' },
+              { icon: '📍', title: 'Offres géolocalisées', desc: 'Trouve les restaurants ouverts à une collab autour de toi, sans les démarcher.' },
               { icon: '⚡', title: 'Candidature en 1 clic', desc: 'Ton profil est prêt. Tu candidates, le restaurant répond sous 48 h.' },
               { icon: '🍽️', title: 'Repas 100 % offert', desc: 'Entrée, plat, dessert et boissons inclus. Valeur moyenne 45 € à 90 €.' },
-              { icon: '🏆', title: 'Historique de fiabilité', desc: 'Chaque collaboration honorée renforce ton profil et ta crédibilité sur la plateforme.' },
-            ].map(item => (
-              <div key={item.title} style={{
-                background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 12, padding: '24px 20px',
-              }}>
-                <div style={{ fontSize: '2rem', marginBottom: 12 }}>{item.icon}</div>
-                <h3 style={{ fontWeight: 700, fontSize: '1rem', marginBottom: 8 }}>{item.title}</h3>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', lineHeight: 1.6, margin: 0 }}>{item.desc}</p>
+              { icon: '🏆', title: 'Historique de fiabilité', desc: 'Chaque collab honorée renforce ton profil et ta crédibilité.' },
+            ].map((item, i) => (
+              <div key={item.title} className={`fun-card fun-card-influenceur reveal reveal-delay-${i + 1}`}>
+                <span className="fun-card-icon">{item.icon}</span>
+                <h3 style={{ fontWeight: 800, fontSize: '1rem', marginBottom: 8, color: '#2d0a4e' }}>{item.title}</h3>
+                <p style={{ color: '#5b4d6e', fontSize: '0.88rem', lineHeight: 1.6, margin: 0 }}>{item.desc}</p>
               </div>
             ))}
           </div>
           <div style={{ textAlign: 'center' }}>
-            <a href="#restaurants" className="btn btn-primary">Voir les offres disponibles →</a>
+            <a href="#restaurants" className="btn btn-primary" style={{ fontSize: '1rem', padding: '14px 32px' }}>Voir les offres disponibles →</a>
           </div>
         </div>
       </section>
 
       {/* POUR LES RESTAURATEURS */}
-      <section id="restaurateurs" style={{ padding: '80px 20px', background: 'var(--bg)' }}>
-        <div style={{ maxWidth: 900, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 48 }}>
-            <span style={{ background: '#f59e0b', color: '#fff', borderRadius: 20, padding: '4px 16px', fontSize: '0.85rem', fontWeight: 700 }}>Pour les restaurateurs</span>
-            <h2 className="section-title" style={{ marginTop: 16 }}>Des candidatures qualifiées.<br />Un retour garanti.</h2>
-            <p style={{ color: 'var(--text-muted)', maxWidth: 560, margin: '0 auto', lineHeight: 1.7 }}>
-              Fini les sollicitations désordonnées et les repas offerts sans retour. Pop Fluence encadre chaque collaboration
-              de A à Z : profil vérifié, preuve de publication et messagerie intégrée.
+      <section id="restaurateurs" className="lp-section-restaurateurs">
+        <div style={{ maxWidth: 900, margin: '0 auto', position: 'relative', zIndex: 1 }}>
+          <div style={{ textAlign: 'center', marginBottom: 52 }}>
+            <span className="section-pill-restaurateur">🍽️ Pour les restaurateurs</span>
+            <h2 className="section-title" style={{ marginTop: 0, color: '#78350f' }}>Des candidatures qualifiées.<br />Un retour garanti.</h2>
+            <p style={{ color: '#92400e', maxWidth: 560, margin: '0 auto', lineHeight: 1.7, fontSize: '1.05rem' }}>
+              Fini les repas offerts sans retour. Pop Fluence encadre chaque collaboration de A à Z :
+              profil vérifié, preuve de publication et messagerie intégrée.
             </p>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 20, marginBottom: 40 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 20, marginBottom: 44 }}>
             {[
-              { icon: '🎯', title: 'Candidatures ciblées', desc: 'Définissez la tranche d\'abonnés souhaitée. Seuls les influenceurs éligibles peuvent candidater.' },
-              { icon: '🔍', title: 'Profils vérifiés', desc: 'Consultez le profil complet du candidat — réseau, abonnés, historique — avant d\'accepter.' },
-              { icon: '📢', title: 'Visibilité garantie', desc: 'La publication est prouvée via lien ou capture. Remplissez vos heures creuses avec du contenu authentique.' },
-              { icon: '💬', title: 'Messagerie intégrée', desc: 'Coordonnez le rendez-vous directement sur la plateforme. Tout est centralisé, rien ne se perd.' },
-            ].map(item => (
-              <div key={item.title} style={{
-                background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, padding: '24px 20px',
-              }}>
-                <div style={{ fontSize: '2rem', marginBottom: 12 }}>{item.icon}</div>
-                <h3 style={{ fontWeight: 700, fontSize: '1rem', marginBottom: 8 }}>{item.title}</h3>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', lineHeight: 1.6, margin: 0 }}>{item.desc}</p>
+              { icon: '🎯', title: 'Candidatures ciblées', desc: 'Définissez la tranche d\'abonnés souhaitée. Seuls les profils éligibles peuvent candidater.' },
+              { icon: '🔍', title: 'Profils vérifiés', desc: 'Consultez réseau, abonnés et historique de fiabilité avant d\'accepter.' },
+              { icon: '📢', title: 'Visibilité garantie', desc: 'La publication est prouvée via lien ou capture. Du contenu authentique à chaque fois.' },
+              { icon: '💬', title: 'Messagerie intégrée', desc: 'Coordonnez le rendez-vous directement sur la plateforme. Tout est centralisé.' },
+            ].map((item, i) => (
+              <div key={item.title} className={`fun-card fun-card-restaurateur reveal reveal-delay-${i + 1}`}>
+                <span className="fun-card-icon">{item.icon}</span>
+                <h3 style={{ fontWeight: 800, fontSize: '1rem', marginBottom: 8, color: '#78350f' }}>{item.title}</h3>
+                <p style={{ color: '#92400e', fontSize: '0.88rem', lineHeight: 1.6, margin: 0 }}>{item.desc}</p>
               </div>
             ))}
           </div>
           <div style={{ textAlign: 'center' }}>
-            <button className="btn btn-primary" style={{ background: '#f59e0b', border: 'none' }} onClick={() => setAuthOpen(true)}>
+            <button className="btn btn-primary" style={{ background: 'linear-gradient(135deg, #f59e0b, #f97316)', border: 'none', fontSize: '1rem', padding: '14px 32px', boxShadow: '0 4px 20px rgba(245,158,11,0.4)' }} onClick={() => setAuthOpen(true)}>
               Inscrire mon restaurant →
             </button>
           </div>
