@@ -82,6 +82,7 @@ type Utilisateur = {
 
 function AuthModal({ onClose, onConnexion }: { onClose: () => void; onConnexion: (u: Utilisateur) => void }) {
   const [tab, setTab] = useState<'login' | 'influenceur' | 'restaurateur'>('login')
+  const [inscriptionOk, setInscriptionOk] = useState(false)
   const [form, setForm] = useState({ email: '', password: '', name: '', network: '', followers: '' })
   const [resto, setResto] = useState({ nom: '', email: '', mot_de_passe: '', nom_etablissement: '', adresse: '', siret: '', telephone: '' })
   const [erreur, setErreur] = useState('')
@@ -124,10 +125,7 @@ function AuthModal({ onClose, onConnexion }: { onClose: () => void; onConnexion:
       })
       const data = await r.json()
       if (!r.ok) { setErreur(data.error); return }
-      localStorage.setItem('token', data.token)
-      localStorage.setItem('utilisateur', JSON.stringify(data.utilisateur))
-      onConnexion(data.utilisateur)
-      onClose()
+      setInscriptionOk(true)
     } catch {
       setErreur('Erreur lors de l\'inscription, réessaie.')
     } finally {
@@ -162,6 +160,23 @@ function AuthModal({ onClose, onConnexion }: { onClose: () => void; onConnexion:
       <div className="auth-modal" onClick={e => e.stopPropagation()} style={{ maxHeight: '90vh', overflowY: 'auto' }}>
         <button className="auth-close" onClick={onClose}>✕</button>
 
+        {inscriptionOk ? (
+          <div style={{ textAlign: 'center', padding: '32px 16px' }}>
+            <div style={{ fontSize: '3rem', marginBottom: 16 }}>🎉</div>
+            <h2 style={{ fontWeight: 700, fontSize: '1.3rem', marginBottom: 12 }}>Inscription reçue !</h2>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', lineHeight: 1.6, marginBottom: 24 }}>
+              Ton profil est en cours de vérification par notre équipe.<br />
+              Tu recevras un email à <strong>{form.email}</strong> dès que ton compte sera activé.
+            </p>
+            <div style={{ background: '#f5f3ff', borderRadius: 12, padding: '16px 20px', marginBottom: 24, textAlign: 'left' }}>
+              <p style={{ fontWeight: 600, fontSize: '0.9rem', marginBottom: 8, color: 'var(--primary)' }}>⏱ Délai de validation</p>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: 0 }}>La validation prend généralement moins de 24h. Vérifie aussi tes spams.</p>
+            </div>
+            <button className="btn btn-primary" onClick={onClose} style={{ width: '100%' }}>
+              Fermer
+            </button>
+          </div>
+        ) : (
         <div className="auth-tabs">
           <button className={`auth-tab ${tab === 'login' ? 'active' : ''}`} onClick={() => changeTab('login')}>Connexion</button>
           <button className={`auth-tab ${tab === 'influenceur' ? 'active' : ''}`} onClick={() => changeTab('influenceur')}>Influenceur</button>
@@ -248,6 +263,7 @@ function AuthModal({ onClose, onConnexion }: { onClose: () => void; onConnexion:
             </button>
             <p className="auth-terms">Ton dossier sera examiné par notre équipe sous 48h.</p>
           </form>
+        )}
         )}
       </div>
     </div>
