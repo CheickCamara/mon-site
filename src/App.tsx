@@ -349,6 +349,20 @@ type Profil = {
   pseudo: string | null
 }
 
+function tempsEcoule(dateIso: string): string {
+  const diff = Date.now() - new Date(dateIso).getTime()
+  const minutes = Math.floor(diff / 60000)
+  if (minutes < 60) return minutes <= 1 ? 'il y a moins d\'une minute' : `il y a ${minutes} minutes`
+  const heures = Math.floor(minutes / 60)
+  if (heures < 24) return heures === 1 ? 'il y a 1 heure' : `il y a ${heures} heures`
+  const jours = Math.floor(heures / 24)
+  if (jours < 7) return jours === 1 ? 'il y a 1 jour' : `il y a ${jours} jours`
+  const semaines = Math.floor(jours / 7)
+  if (semaines < 5) return semaines === 1 ? 'il y a 1 semaine' : `il y a ${semaines} semaines`
+  const mois = Math.floor(jours / 30)
+  return mois === 1 ? 'il y a 1 mois' : `il y a ${mois} mois`
+}
+
 function MonEspace({ utilisateur, onRetour, onNomChange }: { utilisateur: Utilisateur; onRetour: () => void; onNomChange: (nom: string) => void }) {
   const [onglet, setOnglet] = useState<'candidatures' | 'profil'>('candidatures')
   const [candidatures, setCandidatures] = useState<MaCandidature[]>([])
@@ -560,7 +574,7 @@ function MonEspace({ utilisateur, onRetour, onNomChange }: { utilisateur: Utilis
                           {c.offres?.valeur_indicative ? ` · Valeur ${c.offres.valeur_indicative} €` : ''}
                         </p>
                         <p style={{ color: 'var(--text-muted)', fontSize: '0.78rem', marginTop: 4 }}>
-                          Candidaté le {new Date(c.date_candidature).toLocaleDateString('fr-FR')}
+                          Candidaté {tempsEcoule(c.date_candidature)}
                         </p>
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
