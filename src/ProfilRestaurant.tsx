@@ -24,6 +24,7 @@ type Avis = {
   note: number
   commentaire: string | null
   created_at: string
+  candidatures?: { influenceurs?: { pseudo: string | null; nom: string } | null } | null
 }
 
 type Profil = {
@@ -198,9 +199,16 @@ export default function ProfilRestaurant({ restaurantId, onRetour, estConnecte, 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {avis.map((a, i) => (
                 <div key={i} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, padding: '16px 20px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                    <span style={{ color: '#f59e0b', fontWeight: 700 }}>{etoiles(a.note)} {a.note}/5</span>
-                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
+                    <div>
+                      <span style={{ color: '#f59e0b', fontWeight: 700 }}>{etoiles(a.note)} {a.note}/5</span>
+                      {a.candidatures?.influenceurs && (
+                        <span style={{ marginLeft: 8, fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+                          — {a.candidatures.influenceurs.pseudo ?? a.candidatures.influenceurs.nom}
+                        </span>
+                      )}
+                    </div>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
                       {new Date(a.created_at).toLocaleDateString('fr-FR')}
                     </span>
                   </div>

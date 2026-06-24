@@ -563,15 +563,16 @@ function MonEspace({ utilisateur, onRetour, onNomChange }: { utilisateur: Utilis
                         <span style={{ fontWeight: 600, fontSize: '0.85rem', color: statut.color, whiteSpace: 'nowrap' }}>
                           {statut.label}
                         </span>
-                        {c.statut === 'valide' && (
+                        {(c.statut === 'valide' || c.statut === 'refuse') && (
                           <button
                             onClick={() => { setMessagerieCand({ id: c.id, nom: c.offres?.restaurants?.nom ?? 'Restaurant' }); setNonLus(prev => ({ ...prev, [c.id]: 0 })) }}
                             style={{
-                              position: 'relative', padding: '6px 12px', borderRadius: 20, border: '1px solid var(--primary)',
-                              background: 'transparent', color: 'var(--primary)', cursor: 'pointer',
+                              position: 'relative', padding: '6px 12px', borderRadius: 20,
+                              border: `1px solid ${c.statut === 'refuse' ? 'var(--text-muted)' : 'var(--primary)'}`,
+                              background: 'transparent', color: c.statut === 'refuse' ? 'var(--text-muted)' : 'var(--primary)', cursor: 'pointer',
                               fontWeight: 600, fontSize: '0.8rem',
                             }}>
-                            💬 Message
+                            💬 {c.statut === 'refuse' ? 'Voir échanges' : 'Message'}
                             {(nonLus[c.id] ?? 0) > 0 && (
                               <span style={{
                                 position: 'absolute', top: -6, right: -6, background: '#ef4444', color: '#fff',
@@ -890,6 +891,19 @@ export default function App() {
     fetch(`${API}/mon-espace/notifications${depuis ? `?depuis=${encodeURIComponent(depuis)}` : ''}`, {
       headers: { 'Authorization': `Bearer ${token}` }
     }).then(r => r.json()).then(d => setNotifCount(d.count ?? 0)).catch(() => {})
+    // Pré-charger les candidatures pour afficher leur statut sur les boutons
+    fetch(`${API}/mon-espace/candidatures`, { headers: { 'Authorization': `Bearer ${token}` } })
+      .then(r => r.json()).then((data: { offre_id: number; statut: string }[]) => {
+        if (!Array.isArray(data)) return
+        const map: Record<number, string> = {}
+        data.forEach(c => {
+          if (c.statut === 'refuse') map[c.offre_id] = '❌ Candidature refusée'
+          else if (c.statut === 'en_attente') map[c.offre_id] = '⏳ Candidature en attente'
+          else if (c.statut === 'valide') map[c.offre_id] = '✅ Candidature acceptée'
+          else if (c.statut === 'honoree') map[c.offre_id] = '🏆 Collaboration honorée'
+        })
+        setCandidatureEnvoyee(map)
+      }).catch(() => {})
   }, [utilisateur])
 
   const deconnexion = () => {
@@ -1231,26 +1245,32 @@ export default function App() {
                   <span className="card-chip">🪑 {o.places_restantes} place{o.places_restantes > 1 ? 's' : ''}</span>
                 </div>
                 {o.conditions && <p className="card-desc" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>ℹ️ {o.conditions}</p>}
-                {candidatureEnvoyee[o.id] === 'ok' ? (
-                  <div className="btn btn-full" style={{ background: 'var(--success, #22c55e)', color: '#fff', textAlign: 'center', padding: '10px', borderRadius: 8 }}>
-                    ✅ Candidature envoyée !
-                  </div>
-                ) : (
-                  <>
-                    <button
-                      className="btn btn-primary btn-full"
-                      disabled={candidatureEnvoyee[o.id] === 'chargement'}
-                      onClick={() => candidater(o.id)}
-                    >
-                      {candidatureEnvoyee[o.id] === 'chargement' ? 'Envoi…' : 'Je candidate'}
-                    </button>
-                    {candidatureEnvoyee[o.id] && candidatureEnvoyee[o.id] !== 'chargement' && (
-                      <p style={{ color: 'var(--error, #ef4444)', fontSize: '0.8rem', marginTop: 6 }}>
-                        {candidatureEnvoyee[o.id]}
-                      </p>
-                    )}
-                  </>
-                )}
+                {(() => {
+                  const statut = candidatureEnvoyee[o.id]
+                  if (statut === 'ok' || statut === '⏳ Candidature en attente') {
+                    return <div style={{ background: '#fef3c7', border: '1px solid #fcd34d', borderRadius: 8, padding: '10px', fontSize: '0.85rem', color: '#92400e', textAlign: 'center' }}>{statut === 'ok' ? '✅ Candidature envoyée !' : statut}</div>
+                  }
+                  if (statut === '✅ Candidature acceptée' || statut === '🏆 Collaboration honorée') {
+                    return <div style={{ background: '#f0fdf4', border: '1px solid #86efac', borderRadius: 8, padding: '10px', fontSize: '0.85rem', color: '#166534', textAlign: 'center' }}>{statut}</div>
+                  }
+                  if (statut === '❌ Candidature refusée') {
+                    return <div style={{ background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 8, padding: '10px', fontSize: '0.85rem', color: '#991b1b', textAlign: 'center' }}>❌ Candidature refusée — tu ne peux pas recandidater</div>
+                  }
+                  return (
+                    <>
+                      <button
+                        className="btn btn-primary btn-full"
+                        disabled={statut === 'chargement'}
+                        onClick={() => candidater(o.id)}
+                      >
+                        {statut === 'chargement' ? 'Envoi…' : 'Je candidate'}
+                      </button>
+                      {statut && statut !== 'chargement' && (
+                        <p style={{ color: 'var(--error, #ef4444)', fontSize: '0.8rem', marginTop: 6 }}>{statut}</p>
+                      )}
+                    </>
+                  )
+                })()}
               </div>
             </div>
           ))}
