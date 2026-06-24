@@ -874,14 +874,14 @@ export default function App() {
       <nav className="lp-nav">
         <span className="lp-logo">Pop Fluence</span>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <button className="btn btn-ghost btn-sm" onClick={() => setPage('map')}>🗺 Carte</button>
+          <button className="btn btn-ghost btn-sm" onClick={() => setPage('map')}>🗺 <span className="nav-label">Carte</span></button>
           <button className="btn btn-ghost btn-sm theme-toggle" onClick={toggle} aria-label="Changer le thème">
-            {theme === 'dark' ? '☀️ Clair' : '🌙 Sombre'}
+            {theme === 'dark' ? '☀️' : '🌙'}<span className="nav-label"> {theme === 'dark' ? 'Clair' : 'Sombre'}</span>
           </button>
           {utilisateur ? (
             <>
-              <button className="btn btn-ghost btn-sm" onClick={() => setPage('espace')}>👤 Mon Espace</button>
-              <button className="btn btn-ghost btn-sm" onClick={deconnexion}>Déconnexion</button>
+              <button className="btn btn-ghost btn-sm" onClick={() => setPage('espace')}>👤 <span className="nav-label">Mon Espace</span></button>
+              <button className="btn btn-ghost btn-sm" onClick={deconnexion}>⏏ <span className="nav-label">Déconnexion</span></button>
             </>
           ) : (
             <button className="btn btn-primary btn-sm nav-login" onClick={() => setAuthOpen(true)}>Connexion / Inscription</button>
