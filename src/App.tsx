@@ -360,6 +360,7 @@ function MonEspace({ utilisateur, onRetour, onNomChange }: { utilisateur: Utilis
   const [avisDeposes, setAvisDeposes] = useState<Record<number, { note: number; commentaire: string | null }>>({})
   const [avisForm, setAvisForm] = useState<Record<number, { note: number; commentaire: string }>>({})
   const [avisMsg, setAvisMsg] = useState<Record<number, string>>({})
+  const [noteMoyenne, setNoteMoyenne] = useState<{ moyenne: string | null; total: number } | null>(null)
 
   const soumettreAvis = async (candId: number) => {
     const form = avisForm[candId]
@@ -463,6 +464,8 @@ function MonEspace({ utilisateur, onRetour, onNomChange }: { utilisateur: Utilis
         setProfil(data)
         setForm({ nom: data.nom, reseau: data.reseau, abonnes: String(data.abonnes), mot_de_passe: '', pseudo: data.pseudo ?? '' })
       })
+    fetch(`${API}/mon-espace/avis-recus`, { headers: { 'Authorization': `Bearer ${token}` } })
+      .then(r => r.json()).then(data => setNoteMoyenne(data))
   }, [onglet])
 
   const sauvegarder = async (e: React.FormEvent) => {
@@ -732,6 +735,22 @@ function MonEspace({ utilisateur, onRetour, onNomChange }: { utilisateur: Utilis
                     </p>
                     <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.82rem', margin: 0 }}>
                       collaboration{profil.collaborations_honorees !== 1 ? 's' : ''} honorée{profil.collaborations_honorees !== 1 ? 's' : ''}
+                    </p>
+                  </div>
+                </div>
+                <div style={{
+                  flex: 1, minWidth: 160,
+                  background: 'linear-gradient(135deg, #f59e0b, #fbbf24)',
+                  borderRadius: 12, padding: '16px 20px',
+                  display: 'flex', alignItems: 'center', gap: 12,
+                }}>
+                  <span style={{ fontSize: '1.8rem' }}>⭐</span>
+                  <div>
+                    <p style={{ fontWeight: 800, fontSize: '1.6rem', color: '#fff', margin: 0, lineHeight: 1 }}>
+                      {noteMoyenne?.moyenne ?? '—'}<span style={{ fontSize: '1rem', fontWeight: 400 }}>/5</span>
+                    </p>
+                    <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.82rem', margin: 0 }}>
+                      {noteMoyenne?.total ? `${noteMoyenne.total} avis reçu${noteMoyenne.total > 1 ? 's' : ''}` : 'Aucun avis'}
                     </p>
                   </div>
                 </div>

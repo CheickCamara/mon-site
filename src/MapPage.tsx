@@ -97,6 +97,7 @@ export default function MapPage({ utilisateur, token }: Props) {
   const [loadingOffres, setLoadingOffres] = useState(false)
   const [candidatureEnCours, setCandidatureEnCours] = useState<number | null>(null)
   const [msgMap, setMsgMap] = useState<Record<number, string>>({})
+  const [avisResto, setAvisResto] = useState<{ moyenne: string | null; total: number } | null>(null)
 
   useEffect(() => {
     fetch('https://mon-api-rqm7.onrender.com/restaurants')
@@ -174,14 +175,15 @@ export default function MapPage({ utilisateur, token }: Props) {
   }, [avecCoords, selectedId])
 
   useEffect(() => {
-    if (selectedId == null) { setOffres([]); return }
+    if (selectedId == null) { setOffres([]); setAvisResto(null); return }
     setLoadingOffres(true)
-    fetch(`${API}/offres`)
-      .then(r => r.json())
-      .then((data: (Offre & { restaurants: { id: number } })[]) => {
-        setOffres(data.filter(o => o.restaurants?.id === selectedId))
-      })
-      .finally(() => setLoadingOffres(false))
+    Promise.all([
+      fetch(`${API}/offres`).then(r => r.json()),
+      fetch(`${API}/restaurants/${selectedId}/avis`).then(r => r.json()),
+    ]).then(([offresData, avisData]) => {
+      setOffres(offresData.filter((o: Offre & { restaurants: { id: number } }) => o.restaurants?.id === selectedId))
+      setAvisResto(avisData)
+    }).finally(() => setLoadingOffres(false))
   }, [selectedId])
 
   async function candidater(offreId: number) {
@@ -265,6 +267,12 @@ export default function MapPage({ utilisateur, token }: Props) {
               <div className="map-popup__meta">{selected.description}</div>
               <h3 className="map-popup__name">{selected.nom}</h3>
               <p className="map-popup__address">📍 {selected.adresse}</p>
+              {avisResto && avisResto.total > 0 && (
+                <p style={{ fontSize: 13, margin: '4px 0 0', color: '#f59e0b', fontWeight: 700 }}>
+                  {'⭐'.repeat(Math.round(Number(avisResto.moyenne)))} {avisResto.moyenne}/5
+                  <span style={{ color: 'var(--text-muted)', fontWeight: 400, marginLeft: 4 }}>({avisResto.total} avis)</span>
+                </p>
+              )}
 
               <div className="map-popup__offres-title">
                 {loadingOffres ? 'Chargement des offres…' : offres.length === 0 ? 'Aucune offre disponible' : `${offres.length} offre${offres.length > 1 ? 's' : ''} disponible${offres.length > 1 ? 's' : ''}`}

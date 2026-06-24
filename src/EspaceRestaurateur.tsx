@@ -55,6 +55,7 @@ type Candidature = {
   post_publie: boolean
   lien_publication: string | null
   capture_story: string | null
+  influenceur_id: number
   influenceurs: { nom: string; email: string; reseau: string; abonnes: number; pseudo: string | null } | null
   offres: { titre: string; contrepartie: string } | null
 }
@@ -84,6 +85,8 @@ export default function EspaceRestaurateur({ utilisateur, onRetour }: Props) {
   const [avisDeposes, setAvisDeposes] = useState<Record<number, { note: number; commentaire: string | null }>>({})
   const [avisForm, setAvisForm] = useState<Record<number, { note: number; commentaire: string }>>({})
   const [avisMsg, setAvisMsg] = useState<Record<number, string>>({})
+  const [notesInfluenceurs, setNotesInfluenceurs] = useState<Record<number, { moyenne: string; total: number }>>({})
+  const [noteRestaurant, setNoteRestaurant] = useState<{ moyenne: string | null; total: number } | null>(null)
   const [offreEnEdition, setOffreEnEdition] = useState<Offre | null>(null)
   const [editForm, setEditForm] = useState({
     titre: '', description: '', menu: '', valeur_indicative: '',
@@ -121,6 +124,19 @@ export default function EspaceRestaurateur({ utilisateur, onRetour }: Props) {
           .then(d => { if (d) avisExistants[c.id] = d }).catch(() => {})
       ))
       setAvisDeposes(avisExistants)
+      // Note moyenne du restaurant
+      if (resto?.id) {
+        fetch(`${API}/restaurants/${resto.id}/avis`).then(r => r.json()).then(setNoteRestaurant).catch(() => {})
+      }
+      // Notes des influenceurs dans les candidatures
+      const notesCands: Record<number, { moyenne: string; total: number }> = {}
+      await Promise.all(cands.map((c: Candidature) => {
+        const infId = c.influenceur_id
+        if (!infId) return Promise.resolve()
+        return fetch(`${API}/influenceurs/${infId}/avis`, { headers }).then(r => r.json())
+          .then(d => { if (d.total > 0) notesCands[infId] = d }).catch(() => {})
+      }))
+      setNotesInfluenceurs(notesCands)
     }).catch(() => setLoading(false))
   }, [])
 
@@ -296,6 +312,14 @@ export default function EspaceRestaurateur({ utilisateur, onRetour }: Props) {
                   </div>
                   {restaurant.description && (
                     <p style={{ marginTop: 16, fontSize: '0.9rem', lineHeight: 1.6 }}>{restaurant.description}</p>
+                  )}
+                  {noteRestaurant && noteRestaurant.total > 0 && (
+                    <p style={{ marginTop: 12, fontSize: '0.9rem', color: '#f59e0b', fontWeight: 700 }}>
+                      {'⭐'.repeat(Math.round(Number(noteRestaurant.moyenne)))} {noteRestaurant.moyenne}/5
+                      <span style={{ color: 'var(--text-muted)', fontWeight: 400, marginLeft: 6 }}>
+                        {noteRestaurant.total} avis influenceur{noteRestaurant.total > 1 ? 's' : ''}
+                      </span>
+                    </p>
                   )}
                 </div>
 
@@ -545,6 +569,14 @@ export default function EspaceRestaurateur({ utilisateur, onRetour }: Props) {
                         <div>
                           <p style={{ fontWeight: 700, fontSize: '1rem', margin: 0 }}>{c.influenceurs?.nom ?? '—'}</p>
                           <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem', margin: 0 }}>{c.influenceurs?.email ?? ''}</p>
+                          {notesInfluenceurs[c.influenceur_id] && (
+                            <p style={{ fontSize: '0.8rem', color: '#f59e0b', fontWeight: 700, margin: 0 }}>
+                              ⭐ {notesInfluenceurs[c.influenceur_id].moyenne}/5
+                              <span style={{ color: 'var(--text-muted)', fontWeight: 400, marginLeft: 4 }}>
+                                ({notesInfluenceurs[c.influenceur_id].total} avis)
+                              </span>
+                            </p>
+                          )}
                         </div>
                       </div>
                       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
