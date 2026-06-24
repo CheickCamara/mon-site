@@ -468,7 +468,6 @@ export default function EspaceRestaurateur({ utilisateur, onRetour }: Props) {
           </div>
         )}
       </div>
-      </div>
 
       {messagerieCand && (
         <Messagerie
