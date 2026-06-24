@@ -380,6 +380,20 @@ function MonEspace({ utilisateur, onRetour, onNomChange }: { utilisateur: Utilis
   const [avisForm, setAvisForm] = useState<Record<number, { note: number; commentaire: string }>>({})
   const [avisMsg, setAvisMsg] = useState<Record<number, string>>({})
   const [noteMoyenne, setNoteMoyenne] = useState<{ moyenne: string | null; total: number } | null>(null)
+  const [retraitEnCours, setRetraitEnCours] = useState<number | null>(null)
+
+  const retirerCandidature = async (candId: number) => {
+    setRetraitEnCours(candId)
+    try {
+      const res = await fetch(`${API}/mon-espace/candidatures/${candId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` },
+      })
+      if (res.ok) setCandidatures(prev => prev.filter(c => c.id !== candId))
+    } finally {
+      setRetraitEnCours(null)
+    }
+  }
 
   const soumettreAvis = async (candId: number) => {
     const form = avisForm[candId]
@@ -581,6 +595,18 @@ function MonEspace({ utilisateur, onRetour, onNomChange }: { utilisateur: Utilis
                         <span style={{ fontWeight: 600, fontSize: '0.85rem', color: statut.color, whiteSpace: 'nowrap' }}>
                           {statut.label}
                         </span>
+                        {c.statut === 'en_attente' && (
+                          <button
+                            onClick={() => retirerCandidature(c.id)}
+                            disabled={retraitEnCours === c.id}
+                            style={{
+                              padding: '5px 12px', borderRadius: 20, border: '1px solid #fca5a5',
+                              background: 'transparent', color: '#ef4444', cursor: 'pointer',
+                              fontWeight: 600, fontSize: '0.78rem', opacity: retraitEnCours === c.id ? 0.6 : 1,
+                            }}>
+                            {retraitEnCours === c.id ? 'Retrait…' : '✕ Retirer'}
+                          </button>
+                        )}
                         {(c.statut === 'valide' || c.statut === 'refuse') && (
                           <button
                             onClick={() => { setMessagerieCand({ id: c.id, nom: c.offres?.restaurants?.nom ?? 'Restaurant' }); setNonLus(prev => ({ ...prev, [c.id]: 0 })) }}
