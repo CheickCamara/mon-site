@@ -34,6 +34,7 @@ export default function Messagerie({ candidatureId, monRole, nomInterlocuteur, o
 
   useEffect(() => {
     charger()
+    fetch(`${API}/messages/${candidatureId}/lus`, { method: 'PUT', headers })
     const interval = setInterval(charger, 5000)
     return () => clearInterval(interval)
   }, [candidatureId])

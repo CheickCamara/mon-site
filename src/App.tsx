@@ -305,6 +305,7 @@ function MonEspace({ utilisateur, onRetour, onNomChange }: { utilisateur: Utilis
   const [liens, setLiens] = useState<Record<number, string>>({})
   const [pubMsg, setPubMsg] = useState<Record<number, string>>({})
   const [messagerieCand, setMessagerieCand] = useState<{ id: number; nom: string } | null>(null)
+  const [nonLus, setNonLus] = useState<Record<number, number>>({})
   const [uploading, setUploading] = useState<Record<number, boolean>>({})
 
   const token = localStorage.getItem('token')
@@ -362,7 +363,18 @@ function MonEspace({ utilisateur, onRetour, onNomChange }: { utilisateur: Utilis
 
   useEffect(() => {
     fetch(`${API}/mon-espace/candidatures`, { headers: { 'Authorization': `Bearer ${token}` } })
-      .then(r => r.json()).then(data => { setCandidatures(data); setLoadingCand(false) })
+      .then(r => r.json()).then(async (data) => {
+        setCandidatures(data)
+        setLoadingCand(false)
+        const valides = data.filter((c: MaCandidature) => c.statut === 'valide')
+        const counts = await Promise.all(valides.map((c: MaCandidature) =>
+          fetch(`${API}/messages/${c.id}/non-lus`, { headers: { 'Authorization': `Bearer ${token}` } })
+            .then(r => r.json()).then(d => ({ id: c.id, count: d.non_lus ?? 0 })).catch(() => ({ id: c.id, count: 0 }))
+        ))
+        const map: Record<number, number> = {}
+        counts.forEach(({ id, count }) => { map[id] = count })
+        setNonLus(map)
+      })
       .catch(() => setLoadingCand(false))
   }, [])
 
@@ -471,13 +483,20 @@ function MonEspace({ utilisateur, onRetour, onNomChange }: { utilisateur: Utilis
                         </span>
                         {c.statut === 'valide' && (
                           <button
-                            onClick={() => setMessagerieCand({ id: c.id, nom: c.offres?.restaurants?.nom ?? 'Restaurant' })}
+                            onClick={() => { setMessagerieCand({ id: c.id, nom: c.offres?.restaurants?.nom ?? 'Restaurant' }); setNonLus(prev => ({ ...prev, [c.id]: 0 })) }}
                             style={{
-                              padding: '6px 12px', borderRadius: 20, border: '1px solid var(--primary)',
+                              position: 'relative', padding: '6px 12px', borderRadius: 20, border: '1px solid var(--primary)',
                               background: 'transparent', color: 'var(--primary)', cursor: 'pointer',
                               fontWeight: 600, fontSize: '0.8rem',
                             }}>
                             💬 Message
+                            {(nonLus[c.id] ?? 0) > 0 && (
+                              <span style={{
+                                position: 'absolute', top: -6, right: -6, background: '#ef4444', color: '#fff',
+                                borderRadius: '50%', width: 18, height: 18, fontSize: '0.7rem', fontWeight: 700,
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              }}>{nonLus[c.id]}</span>
+                            )}
                           </button>
                         )}
                       </div>

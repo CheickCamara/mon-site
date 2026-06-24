@@ -69,6 +69,7 @@ export default function EspaceRestaurateur({ utilisateur, onRetour }: Props) {
   const [loading, setLoading] = useState(true)
   const [actionLoading, setActionLoading] = useState<number | null>(null)
   const [messagerieCand, setMessagerieCand] = useState<{ id: number; nom: string } | null>(null)
+  const [nonLus, setNonLus] = useState<Record<number, number>>({})
   const [showFormulaireOffre, setShowFormulaireOffre] = useState(false)
   const [newOffre, setNewOffre] = useState({
     titre: '', description: '', menu: '', valeur_indicative: '',
@@ -85,11 +86,20 @@ export default function EspaceRestaurateur({ utilisateur, onRetour }: Props) {
       fetch(`${API}/restaurateur/mon-restaurant`, { headers }).then(r => r.json()),
       fetch(`${API}/restaurateur/mes-offres`, { headers }).then(r => r.json()),
       fetch(`${API}/restaurateur/candidatures`, { headers }).then(r => r.json()),
-    ]).then(([resto, offresData, candData]) => {
+    ]).then(async ([resto, offresData, candData]) => {
       setRestaurant(resto)
       setOffres(Array.isArray(offresData) ? offresData : [])
-      setCandidatures(Array.isArray(candData) ? candData : [])
+      const cands = Array.isArray(candData) ? candData : []
+      setCandidatures(cands)
       setLoading(false)
+      const valides = cands.filter((c: Candidature) => c.statut === 'valide')
+      const counts = await Promise.all(valides.map((c: Candidature) =>
+        fetch(`${API}/messages/${c.id}/non-lus`, { headers }).then(r => r.json())
+          .then(d => ({ id: c.id, count: d.non_lus ?? 0 })).catch(() => ({ id: c.id, count: 0 }))
+      ))
+      const map: Record<number, number> = {}
+      counts.forEach(({ id, count }) => { map[id] = count })
+      setNonLus(map)
     }).catch(() => setLoading(false))
   }, [])
 
@@ -469,13 +479,20 @@ export default function EspaceRestaurateur({ utilisateur, onRetour }: Props) {
                       {c.statut === 'valide' && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-end' }}>
                           <button
-                            onClick={() => setMessagerieCand({ id: c.id, nom: c.influenceurs?.nom ?? 'Influenceur' })}
+                            onClick={() => { setMessagerieCand({ id: c.id, nom: c.influenceurs?.nom ?? 'Influenceur' }); setNonLus(prev => ({ ...prev, [c.id]: 0 })) }}
                             style={{
-                              padding: '6px 12px', borderRadius: 20, border: '1px solid var(--primary)',
+                              position: 'relative', padding: '6px 12px', borderRadius: 20, border: '1px solid var(--primary)',
                               background: 'transparent', color: 'var(--primary)', cursor: 'pointer',
                               fontWeight: 600, fontSize: '0.8rem',
                             }}>
                             💬 Message
+                            {(nonLus[c.id] ?? 0) > 0 && (
+                              <span style={{
+                                position: 'absolute', top: -6, right: -6, background: '#ef4444', color: '#fff',
+                                borderRadius: '50%', width: 18, height: 18, fontSize: '0.7rem', fontWeight: 700,
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              }}>{nonLus[c.id]}</span>
+                            )}
                           </button>
                           {c.post_publie && (
                             <button
