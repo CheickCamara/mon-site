@@ -185,7 +185,7 @@ function AuthModal({ onClose, onConnexion }: { onClose: () => void; onConnexion:
           <button className={`auth-tab ${tab === 'restaurateur' ? 'active' : ''}`} onClick={() => changeTab('restaurateur')}>Restaurateur</button>
         </div>
 
-        {tab === 'login' && (
+        {tab === 'login' && (<>
           {vueMdp === 'connexion' && (
           <form className="auth-form" onSubmit={handleConnexion}>
             <p className="auth-subtitle">Content de te revoir 👋</p>
@@ -235,7 +235,7 @@ function AuthModal({ onClose, onConnexion }: { onClose: () => void; onConnexion:
             <button type="button" className="auth-forgot" onClick={() => { setVueMdp('connexion'); setEmailOublie('') }}>← Retour à la connexion</button>
           </div>
           )}
-        )}
+        </>)}
 
         {tab === 'influenceur' && (
           <form className="auth-form" onSubmit={handleInscriptionInfluenceur}>
