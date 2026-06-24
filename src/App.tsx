@@ -82,12 +82,77 @@ function getPhoto(description: string): string {
 }
 
 
-function AuthModal({ onClose }: { onClose: () => void }) {
+const API = 'https://mon-api-rqm7.onrender.com'
+
+type Utilisateur = {
+  id: number
+  nom: string
+  email: string
+  role: string
+  reseau?: string
+  abonnes?: number
+}
+
+function AuthModal({ onClose, onConnexion }: { onClose: () => void; onConnexion: (u: Utilisateur) => void }) {
   const [tab, setTab] = useState<'login' | 'signup'>('login')
   const [form, setForm] = useState({ email: '', password: '', name: '', network: '', followers: '' })
+  const [erreur, setErreur] = useState('')
+  const [loading, setLoading] = useState(false)
 
-  const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+  const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setForm(f => ({ ...f, [k]: e.target.value }))
+    setErreur('')
+  }
+
+  const handleConnexion = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    try {
+      const r = await fetch(`${API}/auth/connexion`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: form.email, mot_de_passe: form.password }),
+      })
+      const data = await r.json()
+      if (!r.ok) { setErreur(data.error); return }
+      localStorage.setItem('token', data.token)
+      localStorage.setItem('utilisateur', JSON.stringify(data.utilisateur))
+      onConnexion(data.utilisateur)
+      onClose()
+    } catch {
+      setErreur('Erreur de connexion, réessaie.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleInscription = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    try {
+      const r = await fetch(`${API}/auth/inscription-influenceur`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nom: form.name,
+          email: form.email,
+          mot_de_passe: form.password,
+          reseau: form.network,
+          abonnes: Number(form.followers),
+        }),
+      })
+      const data = await r.json()
+      if (!r.ok) { setErreur(data.error); return }
+      localStorage.setItem('token', data.token)
+      localStorage.setItem('utilisateur', JSON.stringify(data.utilisateur))
+      onConnexion(data.utilisateur)
+      onClose()
+    } catch {
+      setErreur('Erreur lors de l\'inscription, réessaie.')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
     <div className="auth-overlay" onClick={onClose}>
@@ -95,16 +160,16 @@ function AuthModal({ onClose }: { onClose: () => void }) {
         <button className="auth-close" onClick={onClose}>✕</button>
 
         <div className="auth-tabs">
-          <button className={`auth-tab ${tab === 'login' ? 'active' : ''}`} onClick={() => setTab('login')}>
+          <button className={`auth-tab ${tab === 'login' ? 'active' : ''}`} onClick={() => { setTab('login'); setErreur('') }}>
             Connexion
           </button>
-          <button className={`auth-tab ${tab === 'signup' ? 'active' : ''}`} onClick={() => setTab('signup')}>
+          <button className={`auth-tab ${tab === 'signup' ? 'active' : ''}`} onClick={() => { setTab('signup'); setErreur('') }}>
             Inscription
           </button>
         </div>
 
         {tab === 'login' ? (
-          <form className="auth-form" onSubmit={e => e.preventDefault()}>
+          <form className="auth-form" onSubmit={handleConnexion}>
             <p className="auth-subtitle">Content de te revoir 👋</p>
             <label>Adresse e-mail
               <input type="email" placeholder="toi@exemple.com" value={form.email} onChange={set('email')} required />
@@ -112,11 +177,13 @@ function AuthModal({ onClose }: { onClose: () => void }) {
             <label>Mot de passe
               <input type="password" placeholder="••••••••" value={form.password} onChange={set('password')} required />
             </label>
-            <a href="#" className="auth-forgot">Mot de passe oublié ?</a>
-            <button type="submit" className="btn btn-primary btn-full auth-submit">Se connecter</button>
+            {erreur && <p className="auth-error">{erreur}</p>}
+            <button type="submit" className="btn btn-primary btn-full auth-submit" disabled={loading}>
+              {loading ? 'Connexion…' : 'Se connecter'}
+            </button>
           </form>
         ) : (
-          <form className="auth-form" onSubmit={e => e.preventDefault()}>
+          <form className="auth-form" onSubmit={handleInscription}>
             <p className="auth-subtitle">Rejoins la communauté — c'est gratuit ✨</p>
             <label>Prénom ou pseudo
               <input type="text" placeholder="Ton nom de créateur" value={form.name} onChange={set('name')} required />
@@ -132,13 +199,15 @@ function AuthModal({ onClose }: { onClose: () => void }) {
                 <option value="">Choisir un réseau…</option>
                 <option value="instagram">Instagram</option>
                 <option value="tiktok">TikTok</option>
-                <option value="youtube">YouTube</option>
               </select>
             </label>
             <label>Nombre d'abonnés
-              <input type="number" placeholder="Minimum 1 000 requis" min="0" value={form.followers} onChange={set('followers')} required />
+              <input type="number" placeholder="Minimum 1 000 requis" min="1000" value={form.followers} onChange={set('followers')} required />
             </label>
-            <button type="submit" className="btn btn-primary btn-full auth-submit">Créer mon compte</button>
+            {erreur && <p className="auth-error">{erreur}</p>}
+            <button type="submit" className="btn btn-primary btn-full auth-submit" disabled={loading}>
+              {loading ? 'Inscription…' : 'Créer mon compte'}
+            </button>
             <p className="auth-terms">En t'inscrivant tu acceptes nos <a href="#">CGU</a> et notre <a href="#">politique de confidentialité</a>.</p>
           </form>
         )}
@@ -151,7 +220,16 @@ export default function App() {
   const { theme, toggle } = useTheme()
   const [page, setPage] = useState<'home' | 'map'>('home')
   const [authOpen, setAuthOpen] = useState(false)
+  const [utilisateur, setUtilisateur] = useState<Utilisateur | null>(() => {
+    try { return JSON.parse(localStorage.getItem('utilisateur') || 'null') } catch { return null }
+  })
   useScrollReveal()
+
+  const deconnexion = () => {
+    localStorage.removeItem('token')
+    localStorage.removeItem('utilisateur')
+    setUtilisateur(null)
+  }
   const [restaurants, setRestaurants] = useState<Restaurant[]>([])
   const [offres, setOffres] = useState<Offre[]>([])
   const [fetchError, setFetchError] = useState(false)
@@ -194,10 +272,17 @@ export default function App() {
           <button className="btn btn-ghost btn-sm theme-toggle" onClick={toggle} aria-label="Changer le thème">
             {theme === 'dark' ? '☀️ Clair' : '🌙 Sombre'}
           </button>
-          <button className="btn btn-primary btn-sm nav-login" onClick={() => setAuthOpen(true)}>Connexion / Inscription</button>
+          {utilisateur ? (
+            <>
+              <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>👋 {utilisateur.nom}</span>
+              <button className="btn btn-ghost btn-sm" onClick={deconnexion}>Déconnexion</button>
+            </>
+          ) : (
+            <button className="btn btn-primary btn-sm nav-login" onClick={() => setAuthOpen(true)}>Connexion / Inscription</button>
+          )}
         </div>
       </nav>
-      {authOpen && <AuthModal onClose={() => setAuthOpen(false)} />}
+      {authOpen && <AuthModal onClose={() => setAuthOpen(false)} onConnexion={(u) => setUtilisateur(u)} />}
       {/* HERO */}
       <header className="lp-hero">
         <div className="lp-hero-badge">Pour les créateurs de contenu</div>
