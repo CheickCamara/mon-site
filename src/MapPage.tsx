@@ -262,7 +262,7 @@ export default function MapPage({ utilisateur, token }: Props) {
         <div ref={mapRef} className="map-canvas" />
 
         {selected && selected.lat && (
-          <div className="map-popup">
+          <div className="map-popup map-popup--desktop">
             <button className="map-popup__close" onClick={() => setSelectedId(null)}>✕</button>
             <div className="map-popup__body">
               <div className="map-popup__meta">{selected.description}</div>
@@ -274,11 +274,9 @@ export default function MapPage({ utilisateur, token }: Props) {
                   <span style={{ color: 'var(--text-muted)', fontWeight: 400, marginLeft: 4 }}>({avisResto.total} avis)</span>
                 </p>
               )}
-
               <div className="map-popup__offres-title">
                 {loadingOffres ? 'Chargement des offres…' : offres.length === 0 ? 'Aucune offre disponible' : `${offres.length} offre${offres.length > 1 ? 's' : ''} disponible${offres.length > 1 ? 's' : ''}`}
               </div>
-
               {offres.map(o => (
                 <div key={o.id} className="map-offre-card">
                   <div className="map-offre-titre">{o.titre}</div>
@@ -290,11 +288,7 @@ export default function MapPage({ utilisateur, token }: Props) {
                   {msgMap[o.id] ? (
                     <p style={{ fontSize: 13, color: '#22c55e', margin: '6px 0 0' }}>{msgMap[o.id]}</p>
                   ) : utilisateur && token ? (
-                    <button
-                      className="btn-candidate"
-                      disabled={candidatureEnCours === o.id}
-                      onClick={() => candidater(o.id)}
-                    >
+                    <button className="btn-candidate" disabled={candidatureEnCours === o.id} onClick={() => candidater(o.id)}>
                       {candidatureEnCours === o.id ? 'Envoi…' : 'Candidater →'}
                     </button>
                   ) : (
@@ -306,6 +300,45 @@ export default function MapPage({ utilisateur, token }: Props) {
           </div>
         )}
       </div>
+
+      {selected && selected.lat && (
+        <div className="map-popup map-popup--mobile">
+          <button className="map-popup__close" onClick={() => setSelectedId(null)}>✕</button>
+          <div className="map-popup__body">
+            <div className="map-popup__meta">{selected.description}</div>
+            <h3 className="map-popup__name">{selected.nom}</h3>
+            <p className="map-popup__address">📍 {selected.adresse}</p>
+            {avisResto && avisResto.total > 0 && (
+              <p style={{ fontSize: 13, margin: '4px 0 0', color: '#f59e0b', fontWeight: 700 }}>
+                {'⭐'.repeat(Math.round(Number(avisResto.moyenne)))} {avisResto.moyenne}/5
+                <span style={{ color: 'var(--text-muted)', fontWeight: 400, marginLeft: 4 }}>({avisResto.total} avis)</span>
+              </p>
+            )}
+            <div className="map-popup__offres-title">
+              {loadingOffres ? 'Chargement des offres…' : offres.length === 0 ? 'Aucune offre disponible' : `${offres.length} offre${offres.length > 1 ? 's' : ''} disponible${offres.length > 1 ? 's' : ''}`}
+            </div>
+            {offres.map(o => (
+              <div key={o.id} className="map-offre-card">
+                <div className="map-offre-titre">{o.titre}</div>
+                <div className="map-offre-meta">
+                  {o.valeur_indicative && <span>🍽 {o.valeur_indicative} €</span>}
+                  <span>📸 {o.contrepartie}</span>
+                  <span>👥 {o.places_restantes} place{o.places_restantes > 1 ? 's' : ''}</span>
+                </div>
+                {msgMap[o.id] ? (
+                  <p style={{ fontSize: 13, color: '#22c55e', margin: '6px 0 0' }}>{msgMap[o.id]}</p>
+                ) : utilisateur && token ? (
+                  <button className="btn-candidate" disabled={candidatureEnCours === o.id} onClick={() => candidater(o.id)}>
+                    {candidatureEnCours === o.id ? 'Envoi…' : 'Candidater →'}
+                  </button>
+                ) : (
+                  <p style={{ fontSize: 12, color: '#9ca3af', margin: '6px 0 0' }}>Connecte-toi pour candidater</p>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
