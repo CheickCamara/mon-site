@@ -80,6 +80,7 @@ export default function EspaceRestaurateur({ utilisateur, onRetour }: Props) {
   })
   const [offreLoading, setOffreLoading] = useState(false)
   const [offreSuccess, setOffreSuccess] = useState(false)
+  const [offreError, setOffreError] = useState('')
   const [offreEnEdition, setOffreEnEdition] = useState<Offre | null>(null)
   const [editForm, setEditForm] = useState({
     titre: '', description: '', menu: '', valeur_indicative: '',
@@ -125,6 +126,7 @@ export default function EspaceRestaurateur({ utilisateur, onRetour }: Props) {
     e.preventDefault()
     if (!offreEnEdition) return
     setOffreLoading(true)
+    setOffreError('')
     try {
       const res = await fetch(`${API}/restaurateur/offres/${offreEnEdition.id}`, {
         method: 'PUT',
@@ -141,6 +143,9 @@ export default function EspaceRestaurateur({ utilisateur, onRetour }: Props) {
         setOffreEnEdition(null)
         const updated = await fetch(`${API}/restaurateur/mes-offres`, { headers }).then(r => r.json())
         setOffres(Array.isArray(updated) ? updated : [])
+      } else {
+        const data = await res.json()
+        setOffreError(data.error || 'Une erreur est survenue')
       }
     } finally {
       setOffreLoading(false)
@@ -157,6 +162,7 @@ export default function EspaceRestaurateur({ utilisateur, onRetour }: Props) {
     e.preventDefault()
     setOffreLoading(true)
     setOffreSuccess(false)
+    setOffreError('')
     try {
       const res = await fetch(`${API}/restaurateur/offres`, {
         method: 'POST',
@@ -173,6 +179,9 @@ export default function EspaceRestaurateur({ utilisateur, onRetour }: Props) {
         setOffreSuccess(true)
         setNewOffre({ titre: '', description: '', menu: '', valeur_indicative: '', contrepartie: 'post', nombre_places: '', tranche_min: '1000', tranche_max: '', conditions: '' })
         setShowFormulaireOffre(false)
+      } else {
+        const data = await res.json()
+        setOffreError(data.error || 'Une erreur est survenue')
       }
     } finally {
       setOffreLoading(false)
@@ -195,6 +204,7 @@ export default function EspaceRestaurateur({ utilisateur, onRetour }: Props) {
 
   const STATUT_RESTAURANT: Record<string, { label: string; color: string }> = {
     en_attente: { label: '⏳ En attente de validation', color: '#f59e0b' },
+    valide:     { label: '✅ Validé et actif',          color: '#22c55e' },
     Ouvert:     { label: '✅ Validé et actif',          color: '#22c55e' },
     Fermé:      { label: '🔒 Fermé',                   color: '#6b7280' },
   }
@@ -293,6 +303,11 @@ export default function EspaceRestaurateur({ utilisateur, onRetour }: Props) {
             {offreSuccess && (
               <div style={{ background: '#f0fdf4', border: '1px solid #86efac', borderRadius: 10, padding: '14px 18px', color: '#166534', fontSize: '0.9rem' }}>
                 ✅ Ton offre a été soumise et sera visible après validation par l'équipe Pop Fluence.
+              </div>
+            )}
+            {offreError && (
+              <div style={{ background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 10, padding: '14px 18px', color: '#991b1b', fontSize: '0.9rem' }}>
+                ❌ {offreError}
               </div>
             )}
 
