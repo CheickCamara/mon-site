@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import Messagerie from './Messagerie'
 
 const API = 'https://mon-api-rqm7.onrender.com'
 
@@ -66,6 +67,7 @@ export default function EspaceRestaurateur({ utilisateur, onRetour }: Props) {
   const [candidatures, setCandidatures] = useState<Candidature[]>([])
   const [loading, setLoading] = useState(true)
   const [actionLoading, setActionLoading] = useState<number | null>(null)
+  const [messagerieCand, setMessagerieCand] = useState<{ id: number; nom: string } | null>(null)
   const [showFormulaireOffre, setShowFormulaireOffre] = useState(false)
   const [newOffre, setNewOffre] = useState({
     titre: '', description: '', menu: '', valeur_indicative: '',
@@ -447,6 +449,17 @@ export default function EspaceRestaurateur({ utilisateur, onRetour }: Props) {
                           </button>
                         </div>
                       )}
+                      {c.statut === 'valide' && (
+                        <button
+                          onClick={() => setMessagerieCand({ id: c.id, nom: c.influenceurs?.nom ?? 'Influenceur' })}
+                          style={{
+                            padding: '6px 12px', borderRadius: 20, border: '1px solid var(--primary)',
+                            background: 'transparent', color: 'var(--primary)', cursor: 'pointer',
+                            fontWeight: 600, fontSize: '0.8rem',
+                          }}>
+                          💬 Message
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -455,6 +468,16 @@ export default function EspaceRestaurateur({ utilisateur, onRetour }: Props) {
           </div>
         )}
       </div>
+      </div>
+
+      {messagerieCand && (
+        <Messagerie
+          candidatureId={messagerieCand.id}
+          monRole="restaurateur"
+          nomInterlocuteur={messagerieCand.nom}
+          onFermer={() => setMessagerieCand(null)}
+        />
+      )}
     </div>
   )
 }

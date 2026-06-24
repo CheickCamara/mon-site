@@ -3,6 +3,7 @@ import './App.css'
 import MapPage from './MapPage'
 import InscriptionRestaurateur from './InscriptionRestaurateur'
 import EspaceRestaurateur from './EspaceRestaurateur'
+import Messagerie from './Messagerie'
 
 function useScrollReveal() {
   useEffect(() => {
@@ -300,6 +301,7 @@ function MonEspace({ utilisateur, onRetour, onNomChange }: { utilisateur: Utilis
   const [saving, setSaving] = useState(false)
   const [liens, setLiens] = useState<Record<number, string>>({})
   const [pubMsg, setPubMsg] = useState<Record<number, string>>({})
+  const [messagerieCand, setMessagerieCand] = useState<{ id: number; nom: string } | null>(null)
   const [uploading, setUploading] = useState<Record<number, boolean>>({})
 
   const token = localStorage.getItem('token')
@@ -460,9 +462,22 @@ function MonEspace({ utilisateur, onRetour, onNomChange }: { utilisateur: Utilis
                           Candidaté le {new Date(c.date_candidature).toLocaleDateString('fr-FR')}
                         </p>
                       </div>
-                      <span style={{ fontWeight: 600, fontSize: '0.85rem', color: statut.color, whiteSpace: 'nowrap' }}>
-                        {statut.label}
-                      </span>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
+                        <span style={{ fontWeight: 600, fontSize: '0.85rem', color: statut.color, whiteSpace: 'nowrap' }}>
+                          {statut.label}
+                        </span>
+                        {c.statut === 'valide' && (
+                          <button
+                            onClick={() => setMessagerieCand({ id: c.id, nom: c.offres?.restaurants?.nom ?? 'Restaurant' })}
+                            style={{
+                              padding: '6px 12px', borderRadius: 20, border: '1px solid var(--primary)',
+                              background: 'transparent', color: 'var(--primary)', cursor: 'pointer',
+                              fontWeight: 600, fontSize: '0.8rem',
+                            }}>
+                            💬 Message
+                          </button>
+                        )}
+                      </div>
                     </div>
 
                     {/* Bloc preuve de publication */}
@@ -530,6 +545,16 @@ function MonEspace({ utilisateur, onRetour, onNomChange }: { utilisateur: Utilis
               })}
             </div>
           </>
+        )}
+
+        {/* Messagerie */}
+        {messagerieCand && (
+          <Messagerie
+            candidatureId={messagerieCand.id}
+            monRole="influenceur"
+            nomInterlocuteur={messagerieCand.nom}
+            onFermer={() => setMessagerieCand(null)}
+          />
         )}
 
         {/* Profil */}
