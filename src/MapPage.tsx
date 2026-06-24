@@ -49,6 +49,7 @@ type Restaurant = {
   statut: string
   lat: number | null
   lng: number | null
+  image: string | null
 }
 
 type Offre = {
@@ -243,7 +244,7 @@ export default function MapPage({ utilisateur, token }: Props) {
               className={`sidebar-item ${selectedId === r.id ? 'sidebar-item--active' : ''}`}
               onClick={() => focusRestaurant(r)}
             >
-              <img src={getPhoto(r.description)} alt={r.nom} className="sidebar-item__img" />
+              <img src={r.image || getPhoto(r.description)} alt={r.nom} className="sidebar-item__img" />
               <div className="sidebar-item__info">
                 <div className="sidebar-item__meta">{r.description || 'Restaurant'}</div>
                 <div className="sidebar-item__name">{r.nom}</div>
