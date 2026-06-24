@@ -77,6 +77,12 @@ export default function EspaceRestaurateur({ utilisateur, onRetour }: Props) {
   })
   const [offreLoading, setOffreLoading] = useState(false)
   const [offreSuccess, setOffreSuccess] = useState(false)
+  const [offreEnEdition, setOffreEnEdition] = useState<Offre | null>(null)
+  const [editForm, setEditForm] = useState({
+    titre: '', description: '', menu: '', valeur_indicative: '',
+    contrepartie: 'post', nombre_places: '', tranche_min: '1000', tranche_max: '', conditions: '',
+  })
+  const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null)
 
   const token = localStorage.getItem('token')
   const headers = { 'Authorization': `Bearer ${token}` }
@@ -102,6 +108,47 @@ export default function EspaceRestaurateur({ utilisateur, onRetour }: Props) {
       setNonLus(map)
     }).catch(() => setLoading(false))
   }, [])
+
+  const ouvrirEdition = (o: Offre) => {
+    setOffreEnEdition(o)
+    setEditForm({
+      titre: o.titre, description: '', menu: '', valeur_indicative: o.valeur_indicative ? String(o.valeur_indicative) : '',
+      contrepartie: o.contrepartie, nombre_places: String(o.nombre_places),
+      tranche_min: String(o.tranche_min), tranche_max: o.tranche_max ? String(o.tranche_max) : '', conditions: '',
+    })
+  }
+
+  const sauvegarderOffre = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!offreEnEdition) return
+    setOffreLoading(true)
+    try {
+      const res = await fetch(`${API}/restaurateur/offres/${offreEnEdition.id}`, {
+        method: 'PUT',
+        headers: { ...headers, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...editForm,
+          valeur_indicative: editForm.valeur_indicative ? Number(editForm.valeur_indicative) : null,
+          nombre_places: Number(editForm.nombre_places),
+          tranche_min: Number(editForm.tranche_min),
+          tranche_max: editForm.tranche_max ? Number(editForm.tranche_max) : null,
+        }),
+      })
+      if (res.ok) {
+        setOffreEnEdition(null)
+        const updated = await fetch(`${API}/restaurateur/mes-offres`, { headers }).then(r => r.json())
+        setOffres(Array.isArray(updated) ? updated : [])
+      }
+    } finally {
+      setOffreLoading(false)
+    }
+  }
+
+  const supprimerOffre = async (id: number) => {
+    await fetch(`${API}/restaurateur/offres/${id}`, { method: 'DELETE', headers })
+    setDeleteConfirm(null)
+    setOffres(prev => prev.filter(o => o.id !== id))
+  }
 
   const soumettreOffre = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -344,20 +391,76 @@ export default function EspaceRestaurateur({ utilisateur, onRetour }: Props) {
               return (
                 <div key={o.id} style={{
                   background: 'var(--card-bg, var(--surface))', border: '1px solid var(--border)',
-                  borderRadius: 12, padding: '20px 24px',
-                  display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12,
+                  borderRadius: 12, padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 12,
                 }}>
-                  <div>
-                    <p style={{ fontWeight: 700, fontSize: '1rem', marginBottom: 4 }}>{o.titre}</p>
-                    <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                      {CONTREPARTIE_LABEL[o.contrepartie]} · {o.places_restantes}/{o.nombre_places} places restantes
-                    </p>
-                    <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: 2 }}>
-                      {o.tranche_min.toLocaleString('fr-FR')}{o.tranche_max ? `–${o.tranche_max.toLocaleString('fr-FR')}` : '+'} abonnés
-                      {o.valeur_indicative ? ` · ${o.valeur_indicative} €` : ''}
-                    </p>
-                  </div>
-                  <span style={{ fontWeight: 700, fontSize: '0.85rem', color: s.color }}>{s.label}</span>
+                  {offreEnEdition?.id === o.id ? (
+                    <form onSubmit={sauvegarderOffre} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      <strong style={{ fontSize: '0.95rem' }}>Modifier l'offre</strong>
+                      {[
+                        { label: 'Titre *', key: 'titre', type: 'text' },
+                        { label: 'Valeur indicative (€)', key: 'valeur_indicative', type: 'number' },
+                        { label: 'Nombre de places', key: 'nombre_places', type: 'number' },
+                        { label: 'Abonnés min', key: 'tranche_min', type: 'number' },
+                        { label: 'Abonnés max', key: 'tranche_max', type: 'number' },
+                      ].map(f => (
+                        <div key={f.key}>
+                          <label style={{ fontSize: '0.8rem', fontWeight: 600 }}>{f.label}</label>
+                          <input type={f.type} value={(editForm as any)[f.key]} required={f.key === 'titre'}
+                            onChange={e => setEditForm(p => ({ ...p, [f.key]: e.target.value }))}
+                            style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)', marginTop: 2 }} />
+                        </div>
+                      ))}
+                      <select value={editForm.contrepartie} onChange={e => setEditForm(p => ({ ...p, contrepartie: e.target.value }))}
+                        style={{ padding: '8px 10px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)' }}>
+                        <option value="post">📸 Post</option>
+                        <option value="story">📱 Story</option>
+                        <option value="reel">🎬 Reel</option>
+                      </select>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <button type="submit" disabled={offreLoading} style={{ flex: 1, padding: '10px', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: 8, fontWeight: 700, cursor: 'pointer' }}>
+                          {offreLoading ? 'Sauvegarde…' : '💾 Sauvegarder'}
+                        </button>
+                        <button type="button" onClick={() => setOffreEnEdition(null)} style={{ padding: '10px 16px', background: 'var(--surface)', color: 'var(--text)', border: '1px solid var(--border)', borderRadius: 8, cursor: 'pointer' }}>
+                          Annuler
+                        </button>
+                      </div>
+                    </form>
+                  ) : (
+                    <>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 8 }}>
+                        <div>
+                          <p style={{ fontWeight: 700, fontSize: '1rem', marginBottom: 4 }}>{o.titre}</p>
+                          <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                            {CONTREPARTIE_LABEL[o.contrepartie]} · {o.places_restantes}/{o.nombre_places} places restantes
+                          </p>
+                          <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: 2 }}>
+                            {o.tranche_min.toLocaleString('fr-FR')}{o.tranche_max ? `–${o.tranche_max.toLocaleString('fr-FR')}` : '+'} abonnés
+                            {o.valeur_indicative ? ` · ${o.valeur_indicative} €` : ''}
+                          </p>
+                        </div>
+                        <span style={{ fontWeight: 700, fontSize: '0.85rem', color: s.color }}>{s.label}</span>
+                      </div>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <button onClick={() => ouvrirEdition(o)} style={{ padding: '7px 14px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', color: 'var(--text)' }}>
+                          ✏️ Modifier
+                        </button>
+                        {deleteConfirm === o.id ? (
+                          <>
+                            <button onClick={() => supprimerOffre(o.id)} style={{ padding: '7px 14px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: 8, fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer' }}>
+                              Confirmer la suppression
+                            </button>
+                            <button onClick={() => setDeleteConfirm(null)} style={{ padding: '7px 14px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, fontSize: '0.85rem', cursor: 'pointer', color: 'var(--text)' }}>
+                              Annuler
+                            </button>
+                          </>
+                        ) : (
+                          <button onClick={() => setDeleteConfirm(o.id)} style={{ padding: '7px 14px', background: 'var(--surface)', border: '1px solid #ef4444', borderRadius: 8, fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', color: '#ef4444' }}>
+                            🗑 Supprimer
+                          </button>
+                        )}
+                      </div>
+                    </>
+                  )}
                 </div>
               )
             })}
