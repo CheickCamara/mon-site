@@ -865,7 +865,7 @@ export default function App() {
           </button>
         </div>
       </nav>
-      <MapPage utilisateur={utilisateur} token={token} />
+      <MapPage utilisateur={utilisateur} token={localStorage.getItem('token')} />
     </div>
   )
 
