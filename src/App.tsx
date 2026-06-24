@@ -86,7 +86,7 @@ function AuthModal({ onClose, onConnexion }: { onClose: () => void; onConnexion:
   const [inscriptionOk, setInscriptionOk] = useState(false)
   const [vueMdp, setVueMdp] = useState<'connexion' | 'oublie' | 'ok'>('connexion')
   const [emailOublie, setEmailOublie] = useState('')
-  const [form, setForm] = useState({ email: '', password: '', name: '', network: '', followers: '' })
+  const [form, setForm] = useState({ email: '', password: '', name: '', network: '', followers: '', pseudo: '' })
   const [resto, setResto] = useState({ nom: '', email: '', mot_de_passe: '', nom_etablissement: '', adresse: '', siret: '', telephone: '' })
   const [erreur, setErreur] = useState('')
   const [loading, setLoading] = useState(false)
@@ -124,7 +124,7 @@ function AuthModal({ onClose, onConnexion }: { onClose: () => void; onConnexion:
       const r = await fetch(`${API}/auth/inscription-influenceur`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nom: form.name, email: form.email, mot_de_passe: form.password, reseau: form.network, abonnes: Number(form.followers) }),
+        body: JSON.stringify({ nom: form.name, email: form.email, mot_de_passe: form.password, reseau: form.network, abonnes: Number(form.followers), pseudo: form.pseudo }),
       })
       const data = await r.json()
       if (!r.ok) { setErreur(data.error); return }
@@ -259,6 +259,10 @@ function AuthModal({ onClose, onConnexion }: { onClose: () => void; onConnexion:
             </label>
             <label>Nombre d'abonnés
               <input type="number" placeholder="Minimum 1 000 requis" min="1000" value={form.followers} onChange={set('followers')} required />
+            </label>
+            <label>Ton pseudo {form.network === 'tiktok' ? 'TikTok' : 'Instagram'} *
+              <input type="text" placeholder={form.network === 'tiktok' ? 'ton_pseudo_tiktok' : 'ton_pseudo_instagram'} value={form.pseudo} onChange={e => setForm(f => ({ ...f, pseudo: e.target.value.replace(/^@/, '') }))} required />
+              <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: 4, display: 'block' }}>Sans le @, ex : {form.network === 'tiktok' ? 'monpseudo.tiktok' : 'monpseudo'}</span>
             </label>
             {erreur && <p className="auth-error">{erreur}</p>}
             <button type="submit" className="btn btn-primary btn-full auth-submit" disabled={loading}>
