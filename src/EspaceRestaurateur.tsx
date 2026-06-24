@@ -99,9 +99,6 @@ export default function EspaceRestaurateur({ utilisateur, onRetour }: Props) {
   const [restoLoading, setRestoLoading] = useState(false)
   const [restoSuccess, setRestoSuccess] = useState(false)
   const [restoError, setRestoError] = useState('')
-  const [photoLoading, setPhotoLoading] = useState(false)
-  const [photoUrl, setPhotoUrl] = useState<string | null>(null)
-
   const token = localStorage.getItem('token')
   const headers = { 'Authorization': `Bearer ${token}` }
 
@@ -112,7 +109,6 @@ export default function EspaceRestaurateur({ utilisateur, onRetour }: Props) {
       fetch(`${API}/restaurateur/candidatures`, { headers }).then(r => r.json()),
     ]).then(async ([resto, offresData, candData]) => {
       setRestaurant(resto)
-      setPhotoUrl(resto?.image || null)
       setOffres(Array.isArray(offresData) ? offresData : [])
       const cands = Array.isArray(candData) ? candData : []
       setCandidatures(cands)
@@ -191,19 +187,6 @@ export default function EspaceRestaurateur({ utilisateur, onRetour }: Props) {
       setEditingResto(false)
     } finally {
       setRestoLoading(false)
-    }
-  }
-
-  const uploadPhoto = async (file: File) => {
-    setPhotoLoading(true)
-    try {
-      const fd = new FormData()
-      fd.append('photo', file)
-      const res = await fetch(`${API}/restaurateur/mon-restaurant/photo`, { method: 'POST', headers, body: fd })
-      const data = await res.json()
-      if (res.ok) setPhotoUrl(data.url)
-    } finally {
-      setPhotoLoading(false)
     }
   }
 
@@ -347,27 +330,6 @@ export default function EspaceRestaurateur({ utilisateur, onRetour }: Props) {
                   background: 'var(--card-bg, var(--surface))', border: '1px solid var(--border)',
                   borderRadius: 12, padding: '20px 24px', marginBottom: 20,
                 }}>
-                  {/* Photo du restaurant */}
-                  <div style={{ marginBottom: 16 }}>
-                    {photoUrl ? (
-                      <img src={photoUrl} alt={restaurant.nom} style={{ width: '100%', height: 180, objectFit: 'cover', borderRadius: 10 }} />
-                    ) : (
-                      <div style={{ width: '100%', height: 140, borderRadius: 10, background: 'linear-gradient(135deg, #1a0533, #2d0a4e)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '3rem' }}>
-                        🍽️
-                      </div>
-                    )}
-                    <label style={{ display: 'inline-block', marginTop: 10, cursor: 'pointer' }}>
-                      <span style={{
-                        padding: '7px 16px', borderRadius: 8, fontSize: '0.82rem', fontWeight: 600,
-                        background: 'var(--accent-bg)', color: 'var(--accent)', border: '1px solid var(--accent-border)', cursor: 'pointer',
-                      }}>
-                        {photoLoading ? 'Envoi…' : '📷 Changer la photo'}
-                      </span>
-                      <input type="file" accept="image/*" style={{ display: 'none' }} disabled={photoLoading}
-                        onChange={e => { const f = e.target.files?.[0]; if (f) uploadPhoto(f) }} />
-                    </label>
-                  </div>
-
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 8 }}>
                     <div>
                       <h2 style={{ fontSize: '1.3rem', fontWeight: 700, marginBottom: 4 }}>{restaurant.nom}</h2>
