@@ -4,6 +4,7 @@ import MapPage from './MapPage'
 import InscriptionRestaurateur from './InscriptionRestaurateur'
 import EspaceRestaurateur from './EspaceRestaurateur'
 import Messagerie from './Messagerie'
+import ProfilRestaurant from './ProfilRestaurant'
 
 function useScrollReveal() {
   useEffect(() => {
@@ -43,7 +44,7 @@ type Offre = {
   tranche_min: number
   tranche_max: number | null
   conditions: string
-  restaurants: { nom: string; adresse: string; image: string }
+  restaurants: { id: number; nom: string; adresse: string; image: string }
 }
 
 const PHOTOS_PAR_CUISINE: Record<string, string> = {
@@ -866,19 +867,30 @@ function ResetMotDePasse({ token, onRetour }: { token: string; onRetour: () => v
 
 export default function App() {
   const { theme, toggle } = useTheme()
-  const [page, setPage] = useState<'home' | 'map' | 'espace' | 'restaurateur' | 'reset'>('home')
+  const [page, setPage] = useState<'home' | 'map' | 'espace' | 'restaurateur' | 'reset' | 'profil-restaurant'>('home')
+  const [profilRestoId, setProfilRestoId] = useState<number | null>(null)
   const [resetToken, setResetToken] = useState('')
   const [authOpen, setAuthOpen] = useState(false)
   const [utilisateur, setUtilisateur] = useState<Utilisateur | null>(() => {
     try { return JSON.parse(localStorage.getItem('utilisateur') || 'null') } catch { return null }
   })
   const [candidatureEnvoyee, setCandidatureEnvoyee] = useState<Record<number, string>>({})
+  const [notifCount, setNotifCount] = useState(0)
   useScrollReveal()
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const token = params.get('reset_token')
     if (token) { setResetToken(token); setPage('reset') }
   }, [])
+
+  useEffect(() => {
+    if (!utilisateur || utilisateur.role !== 'influenceur') return
+    const token = localStorage.getItem('token')
+    const depuis = localStorage.getItem('derniere_visite_espace') ?? ''
+    fetch(`${API}/mon-espace/notifications${depuis ? `?depuis=${encodeURIComponent(depuis)}` : ''}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    }).then(r => r.json()).then(d => setNotifCount(d.count ?? 0)).catch(() => {})
+  }, [utilisateur])
 
   const deconnexion = () => {
     localStorage.removeItem('token')
@@ -922,6 +934,15 @@ export default function App() {
 
   if (page === 'reset') return (
     <ResetMotDePasse token={resetToken} onRetour={() => { setPage('home'); window.history.replaceState({}, '', '/') }} />
+  )
+
+  if (page === 'profil-restaurant' && profilRestoId) return (
+    <ProfilRestaurant
+      restaurantId={profilRestoId}
+      onRetour={() => setPage('home')}
+      estConnecte={!!utilisateur && utilisateur.role === 'influenceur'}
+      token={localStorage.getItem('token')}
+    />
   )
 
   if (page === 'restaurateur') return (
@@ -970,7 +991,22 @@ export default function App() {
           </button>
           {utilisateur ? (
             <>
-              <button className="btn btn-ghost btn-sm" onClick={() => setPage('espace')}>👤 <span className="nav-label">Mon Espace</span></button>
+              <button className="btn btn-ghost btn-sm" style={{ position: 'relative' }} onClick={() => {
+                setPage('espace')
+                setNotifCount(0)
+                localStorage.setItem('derniere_visite_espace', new Date().toISOString())
+              }}>
+                👤 <span className="nav-label">Mon Espace</span>
+                {notifCount > 0 && (
+                  <span style={{
+                    position: 'absolute', top: -4, right: -4,
+                    background: '#ef4444', color: '#fff',
+                    borderRadius: '50%', width: 18, height: 18,
+                    fontSize: 11, fontWeight: 700,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>{notifCount > 9 ? '9+' : notifCount}</span>
+                )}
+              </button>
               <button className="btn btn-ghost btn-sm" onClick={deconnexion}>⏏ <span className="nav-label">Déconnexion</span></button>
             </>
           ) : (
@@ -1173,7 +1209,15 @@ export default function App() {
                 <div className="card-badge">{CONTREPARTIE_LABEL[o.contrepartie]}</div>
               </div>
               <div className="card-body">
-                <div className="card-meta">{o.restaurants?.nom} · {o.restaurants?.adresse}</div>
+                <div className="card-meta" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 4 }}>
+                  <span>{o.restaurants?.nom} · {o.restaurants?.adresse}</span>
+                  {o.restaurants?.id && (
+                    <button onClick={() => { setProfilRestoId(o.restaurants!.id); setPage('profil-restaurant') }}
+                      style={{ background: 'none', border: 'none', color: 'var(--primary)', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>
+                      Voir le profil →
+                    </button>
+                  )}
+                </div>
                 <h3 className="card-title">{o.titre}</h3>
                 {o.menu && <p className="card-desc">{o.menu}</p>}
                 <div style={{ display: 'flex', gap: 8, margin: '8px 0', flexWrap: 'wrap' }}>
