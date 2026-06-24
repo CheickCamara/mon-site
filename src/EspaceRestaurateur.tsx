@@ -3,6 +3,20 @@ import Messagerie from './Messagerie'
 
 const API = 'https://mon-api-rqm7.onrender.com'
 
+function tempsEcoule(dateIso: string): string {
+  const diff = Date.now() - new Date(dateIso).getTime()
+  const minutes = Math.floor(diff / 60000)
+  if (minutes < 60) return minutes <= 1 ? 'il y a moins d\'une minute' : `il y a ${minutes} minutes`
+  const heures = Math.floor(minutes / 60)
+  if (heures < 24) return heures === 1 ? 'il y a 1 heure' : `il y a ${heures} heures`
+  const jours = Math.floor(heures / 24)
+  if (jours < 7) return jours === 1 ? 'il y a 1 jour' : `il y a ${jours} jours`
+  const semaines = Math.floor(jours / 7)
+  if (semaines < 5) return semaines === 1 ? 'il y a 1 semaine' : `il y a ${semaines} semaines`
+  const mois = Math.floor(jours / 30)
+  return mois === 1 ? 'il y a 1 mois' : `il y a ${mois} mois`
+}
+
 const STATUT_CANDIDATURE: Record<string, { label: string; color: string }> = {
   en_attente: { label: '⏳ En attente', color: '#f59e0b' },
   valide:     { label: '✅ Acceptée',   color: '#22c55e' },
@@ -719,7 +733,7 @@ export default function EspaceRestaurateur({ utilisateur, onRetour }: Props) {
                         Pour : <strong>{c.offres?.titre ?? '—'}</strong> · {CONTREPARTIE_LABEL[c.offres?.contrepartie ?? ''] ?? ''}
                       </p>
                       <p style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>
-                        Candidature du {new Date(c.date_candidature).toLocaleDateString('fr-FR')}
+                        Candidaté {tempsEcoule(c.date_candidature)}
                       </p>
                       {c.post_publie && (
                         <div style={{ marginTop: 8, display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
