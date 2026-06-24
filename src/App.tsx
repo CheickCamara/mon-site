@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import './App.css'
 import MapPage from './MapPage'
+import InscriptionRestaurateur from './InscriptionRestaurateur'
 
 function useScrollReveal() {
   useEffect(() => {
@@ -416,7 +417,7 @@ function MonEspace({ utilisateur, onRetour, onNomChange }: { utilisateur: Utilis
 
 export default function App() {
   const { theme, toggle } = useTheme()
-  const [page, setPage] = useState<'home' | 'map' | 'espace'>('home')
+  const [page, setPage] = useState<'home' | 'map' | 'espace' | 'restaurateur'>('home')
   const [authOpen, setAuthOpen] = useState(false)
   const [utilisateur, setUtilisateur] = useState<Utilisateur | null>(() => {
     try { return JSON.parse(localStorage.getItem('utilisateur') || 'null') } catch { return null }
@@ -463,6 +464,13 @@ export default function App() {
       })
       .catch(() => { setFetchError(true); setFetchLoading(false) })
   }, [])
+
+  if (page === 'restaurateur') return (
+    <InscriptionRestaurateur
+      onRetour={() => setPage('home')}
+      onConnexion={(u) => setUtilisateur(u)}
+    />
+  )
 
   if (page === 'espace' && utilisateur) return (
     <MonEspace
@@ -675,6 +683,12 @@ export default function App() {
       {/* FOOTER */}
       <footer className="lp-footer">
         <p>© 2026 Pop Fluence — Tous droits réservés</p>
+        <p style={{ marginTop: 12 }}>
+          Vous êtes restaurateur ?{' '}
+          <button onClick={() => setPage('restaurateur')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--primary)', fontWeight: 600, textDecoration: 'underline', fontSize: 'inherit' }}>
+            Rejoignez la plateforme
+          </button>
+        </p>
       </footer>
     </div>
   )
