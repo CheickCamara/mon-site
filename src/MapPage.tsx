@@ -188,7 +188,7 @@ export default function MapPage({ utilisateur, token }: Props) {
     if (!token) return
     setCandidatureEnCours(offreId)
     try {
-      const res = await fetch(`${API}/mon-espace/candidatures`, {
+      const res = await fetch(`${API}/candidatures`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ offre_id: offreId }),
