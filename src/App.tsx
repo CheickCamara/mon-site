@@ -739,38 +739,40 @@ export default function App() {
       </nav>
       {authOpen && <AuthModal onClose={() => setAuthOpen(false)} onConnexion={(u) => setUtilisateur(u)} />}
       {/* HERO */}
+      {/* HERO */}
       <header className="lp-hero">
-        <div className="lp-hero-badge">Pour les créateurs de contenu</div>
+        <div className="lp-hero-badge">Instagram · TikTok · Restauration</div>
         <h1 className="lp-hero-title">
-          <span className="highlight">Mange</span> gratuitement.<br />Crée du contenu.
+          La plateforme qui connecte<br /><span className="highlight">influenceurs</span> et <span className="highlight">restaurants</span>
         </h1>
         <p className="lp-hero-sub">
-          Les meilleurs restaurants t'offrent leur menu dégustation — entrée, plat, dessert et boissons —
-          en échange d'une publication authentique sur tes réseaux. Zéro euro à débourser.
-          Juste du contenu sincère et une communauté de <strong>minimum 1 000 abonnés</strong>.
+          Pop Fluence met en relation les créateurs de contenu et les restaurateurs autour d'un échange simple :
+          un repas dégustation offert contre une publication authentique. Zéro agence, zéro contrat compliqué.
         </p>
         <div className="lp-hero-cta">
-          <a href="#restaurants" className="btn btn-primary">Voir les restaurants</a>
-          <a href="#concept" className="btn btn-ghost">Comment ça marche</a>
+          <a href="#influenceurs" className="btn btn-primary">Je suis influenceur</a>
+          <a href="#restaurateurs" className="btn btn-ghost">Je suis restaurateur</a>
         </div>
         <div className="lp-hero-stats">
-          <div className="stat"><span className="stat-num">120+</span><span>Restaurants partenaires</span></div>
-          <div className="stat-divider" />
-          <div className="stat"><span className="stat-num">3 400+</span><span>Influenceurs inscrits</span></div>
-          <div className="stat-divider" />
           <div className="stat"><span className="stat-num">0 €</span><span>Frais d'inscription</span></div>
+          <div className="stat-divider" />
+          <div className="stat"><span className="stat-num">1 000</span><span>abonnés minimum</span></div>
+          <div className="stat-divider" />
+          <div className="stat"><span className="stat-num">48 h</span><span>délai de réponse</span></div>
         </div>
       </header>
 
-      {/* CONCEPT SECTION */}
+      {/* PRINCIPE */}
       <section className="lp-concept" id="concept">
         <div className="concept-inner">
           <div className="concept-text">
             <span className="concept-tag">Le principe</span>
-            <h2 className="section-title left">Dégustation gratuite<br />contre visibilité</h2>
+            <h2 className="section-title left">Un échange simple<br />et gagnant-gagnant</h2>
             <p className="concept-desc">
-              Pop Fluence repose sur un échange simple et gagnant-gagnant : le restaurant t'invite à table,
-              tu lui offres de la visibilité auprès de ta communauté. Pas de cachet, pas d'agence, pas de contrat compliqué.
+              Pop Fluence est une plateforme web de mise en relation géolocalisée entre influenceurs Instagram & TikTok
+              et restaurateurs. Le restaurateur publie une offre de menu dégustation avec la contrepartie attendue.
+              L'influenceur découvre les offres disponibles près de chez lui et candidate en un clic.
+              Pas de cachet, pas d'agence, pas de contrat compliqué.
             </p>
             <ul className="concept-list">
               <li>
@@ -783,22 +785,22 @@ export default function App() {
               <li>
                 <span className="concept-icon">📸</span>
                 <div>
-                  <strong>Une story + un post dans les 7 jours</strong>
-                  <span>Contenu authentique, sans script imposé. Tu gardes ta ligne éditoriale.</span>
+                  <strong>Contrepartie claire et cadrée</strong>
+                  <span>Story, post ou reel — précisé dans chaque offre. Contenu authentique, sans script imposé.</span>
                 </div>
               </li>
               <li>
                 <span className="concept-icon">👥</span>
                 <div>
                   <strong>1 000 abonnés minimum requis</strong>
-                  <span>Ce seuil garantit une vraie portée pour le restaurant partenaire. Instagram, TikTok ou YouTube — peu importe le réseau.</span>
+                  <span>Ce seuil garantit une vraie portée pour le restaurant partenaire. Instagram ou TikTok.</span>
                 </div>
               </li>
               <li>
                 <span className="concept-icon">✅</span>
                 <div>
                   <strong>Validation sous 48 h</strong>
-                  <span>Le restaurant consulte ton profil et confirme rapidement. Tu reçois une notification dès l'accord.</span>
+                  <span>Le restaurant consulte ton profil vérifié et confirme rapidement. Notification immédiate.</span>
                 </div>
               </li>
             </ul>
@@ -807,35 +809,103 @@ export default function App() {
             <div className="concept-badge">
               <span className="badge-num">1 000</span>
               <span className="badge-label">abonnés minimum</span>
-              <span className="badge-sub">Instagram · TikTok · YouTube</span>
+              <span className="badge-sub">Instagram · TikTok</span>
             </div>
             <p className="concept-note">
-              Pas encore 1 000 abonnés ? Inscris-toi quand même — tu recevras une alerte dès que tu atteins le seuil.
+              La plateforme encadre l'ensemble : candidature, validation, messagerie, preuve de publication et historique de fiabilité.
             </p>
           </div>
         </div>
       </section>
 
-      {/* HOW IT WORKS */}
-      <section className="lp-how" id="how">
+      {/* POUR LES INFLUENCEURS */}
+      <section id="influenceurs" style={{ padding: '80px 20px', background: 'var(--surface)' }}>
+        <div style={{ maxWidth: 900, margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: 48 }}>
+            <span style={{ background: 'var(--primary)', color: '#fff', borderRadius: 20, padding: '4px 16px', fontSize: '0.85rem', fontWeight: 700 }}>Pour les influenceurs</span>
+            <h2 className="section-title" style={{ marginTop: 16 }}>Mange gratuitement.<br />Crée du contenu.</h2>
+            <p style={{ color: 'var(--text-muted)', maxWidth: 560, margin: '0 auto', lineHeight: 1.7 }}>
+              Tu es créateur de contenu food ou lifestyle sur Instagram ou TikTok ? Accède à des collaborations réelles
+              près de chez toi, sans démarcher, avec une contrepartie claire dès le départ.
+            </p>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 20, marginBottom: 40 }}>
+            {[
+              { icon: '📍', title: 'Offres géolocalisées', desc: 'Trouve les restaurants ouverts à une collaboration autour de toi, sans démarcher.' },
+              { icon: '⚡', title: 'Candidature en 1 clic', desc: 'Ton profil est prêt. Tu candidates, le restaurant répond sous 48 h.' },
+              { icon: '🍽️', title: 'Repas 100 % offert', desc: 'Entrée, plat, dessert et boissons inclus. Valeur moyenne 45 € à 90 €.' },
+              { icon: '🏆', title: 'Historique de fiabilité', desc: 'Chaque collaboration honorée renforce ton profil et ta crédibilité sur la plateforme.' },
+            ].map(item => (
+              <div key={item.title} style={{
+                background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 12, padding: '24px 20px',
+              }}>
+                <div style={{ fontSize: '2rem', marginBottom: 12 }}>{item.icon}</div>
+                <h3 style={{ fontWeight: 700, fontSize: '1rem', marginBottom: 8 }}>{item.title}</h3>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', lineHeight: 1.6, margin: 0 }}>{item.desc}</p>
+              </div>
+            ))}
+          </div>
+          <div style={{ textAlign: 'center' }}>
+            <a href="#restaurants" className="btn btn-primary">Voir les offres disponibles →</a>
+          </div>
+        </div>
+      </section>
+
+      {/* POUR LES RESTAURATEURS */}
+      <section id="restaurateurs" style={{ padding: '80px 20px', background: 'var(--bg)' }}>
+        <div style={{ maxWidth: 900, margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: 48 }}>
+            <span style={{ background: '#f59e0b', color: '#fff', borderRadius: 20, padding: '4px 16px', fontSize: '0.85rem', fontWeight: 700 }}>Pour les restaurateurs</span>
+            <h2 className="section-title" style={{ marginTop: 16 }}>Des candidatures qualifiées.<br />Un retour garanti.</h2>
+            <p style={{ color: 'var(--text-muted)', maxWidth: 560, margin: '0 auto', lineHeight: 1.7 }}>
+              Fini les sollicitations désordonnées et les repas offerts sans retour. Pop Fluence encadre chaque collaboration
+              de A à Z : profil vérifié, preuve de publication et messagerie intégrée.
+            </p>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 20, marginBottom: 40 }}>
+            {[
+              { icon: '🎯', title: 'Candidatures ciblées', desc: 'Définissez la tranche d\'abonnés souhaitée. Seuls les influenceurs éligibles peuvent candidater.' },
+              { icon: '🔍', title: 'Profils vérifiés', desc: 'Consultez le profil complet du candidat — réseau, abonnés, historique — avant d\'accepter.' },
+              { icon: '📢', title: 'Visibilité garantie', desc: 'La publication est prouvée via lien ou capture. Remplissez vos heures creuses avec du contenu authentique.' },
+              { icon: '💬', title: 'Messagerie intégrée', desc: 'Coordonnez le rendez-vous directement sur la plateforme. Tout est centralisé, rien ne se perd.' },
+            ].map(item => (
+              <div key={item.title} style={{
+                background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, padding: '24px 20px',
+              }}>
+                <div style={{ fontSize: '2rem', marginBottom: 12 }}>{item.icon}</div>
+                <h3 style={{ fontWeight: 700, fontSize: '1rem', marginBottom: 8 }}>{item.title}</h3>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', lineHeight: 1.6, margin: 0 }}>{item.desc}</p>
+              </div>
+            ))}
+          </div>
+          <div style={{ textAlign: 'center' }}>
+            <button className="btn btn-primary" style={{ background: '#f59e0b', border: 'none' }} onClick={() => setShowAuth(true)}>
+              Inscrire mon restaurant →
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* COMMENT ÇA MARCHE */}
+      <section className="lp-how" id="how" style={{ background: 'var(--surface)' }}>
         <h2 className="section-title">Comment ça marche</h2>
         <div className="steps">
           <div className="step reveal reveal-delay-1">
             <div className="step-num">1</div>
-            <h3>Vérifie ton éligibilité</h3>
-            <p>Tu as au moins <strong>1 000 abonnés</strong> sur Instagram, TikTok ou YouTube ? Tu es éligible. Crée ton profil en 2 minutes.</p>
+            <h3>Crée ton profil</h3>
+            <p>Influenceur ou restaurateur — inscription en 2 minutes. Compte vérifié, profil prêt à l'emploi.</p>
           </div>
           <div className="step-connector">→</div>
           <div className="step reveal reveal-delay-2">
             <div className="step-num">2</div>
-            <h3>Choisis un restaurant</h3>
-            <p>Géolocalise-toi pour voir les établissements proches et leur seuil d'abonnés. Filtre par cuisine, quartier ou score.</p>
+            <h3>Candidate ou publie</h3>
+            <p>L'influenceur trouve une offre près de chez lui et candidate. Le restaurateur reçoit des candidatures filtrées et qualifiées.</p>
           </div>
           <div className="step-connector">→</div>
           <div className="step reveal reveal-delay-3">
             <div className="step-num">3</div>
-            <h3>Candidate & déguste</h3>
-            <p>Partage ton profil. Le restaurant valide sous 48 h. Tu dégustes gratuitement et publies dans les 7 jours.</p>
+            <h3>Dégustation & publication</h3>
+            <p>Le repas a lieu. L'influenceur publie son contenu et dépose la preuve sur la plateforme. La collaboration est honorée.</p>
           </div>
         </div>
       </section>
