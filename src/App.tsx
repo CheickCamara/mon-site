@@ -879,7 +879,7 @@ export default function App() {
             ))}
           </div>
           <div style={{ textAlign: 'center' }}>
-            <button className="btn btn-primary" style={{ background: '#f59e0b', border: 'none' }} onClick={() => setShowAuth(true)}>
+            <button className="btn btn-primary" style={{ background: '#f59e0b', border: 'none' }} onClick={() => setAuthOpen(true)}>
               Inscrire mon restaurant →
             </button>
           </div>
