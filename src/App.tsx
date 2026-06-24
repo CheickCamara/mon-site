@@ -223,12 +223,34 @@ export default function App() {
   const [utilisateur, setUtilisateur] = useState<Utilisateur | null>(() => {
     try { return JSON.parse(localStorage.getItem('utilisateur') || 'null') } catch { return null }
   })
+  const [candidatureEnvoyee, setCandidatureEnvoyee] = useState<Record<number, string>>({})
   useScrollReveal()
 
   const deconnexion = () => {
     localStorage.removeItem('token')
     localStorage.removeItem('utilisateur')
     setUtilisateur(null)
+  }
+
+  const candidater = async (offreId: number) => {
+    if (!utilisateur) { setAuthOpen(true); return }
+    const token = localStorage.getItem('token')
+    setCandidatureEnvoyee(prev => ({ ...prev, [offreId]: 'chargement' }))
+    try {
+      const r = await fetch(`${API}/candidatures`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ offre_id: offreId }),
+      })
+      const data = await r.json()
+      if (!r.ok) {
+        setCandidatureEnvoyee(prev => ({ ...prev, [offreId]: data.error }))
+      } else {
+        setCandidatureEnvoyee(prev => ({ ...prev, [offreId]: 'ok' }))
+      }
+    } catch {
+      setCandidatureEnvoyee(prev => ({ ...prev, [offreId]: 'Erreur réseau, réessaie.' }))
+    }
   }
   const [restaurants, setRestaurants] = useState<Restaurant[]>([])
   const [offres, setOffres] = useState<Offre[]>([])
@@ -422,9 +444,26 @@ export default function App() {
                   <span className="card-chip">🪑 {o.places_restantes} place{o.places_restantes > 1 ? 's' : ''}</span>
                 </div>
                 {o.conditions && <p className="card-desc" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>ℹ️ {o.conditions}</p>}
-                <button className="btn btn-primary btn-full" onClick={() => setAuthOpen(true)}>
-                  Je candidate
-                </button>
+                {candidatureEnvoyee[o.id] === 'ok' ? (
+                  <div className="btn btn-full" style={{ background: 'var(--success, #22c55e)', color: '#fff', textAlign: 'center', padding: '10px', borderRadius: 8 }}>
+                    ✅ Candidature envoyée !
+                  </div>
+                ) : (
+                  <>
+                    <button
+                      className="btn btn-primary btn-full"
+                      disabled={candidatureEnvoyee[o.id] === 'chargement'}
+                      onClick={() => candidater(o.id)}
+                    >
+                      {candidatureEnvoyee[o.id] === 'chargement' ? 'Envoi…' : 'Je candidate'}
+                    </button>
+                    {candidatureEnvoyee[o.id] && candidatureEnvoyee[o.id] !== 'chargement' && (
+                      <p style={{ color: 'var(--error, #ef4444)', fontSize: '0.8rem', marginTop: 6 }}>
+                        {candidatureEnvoyee[o.id]}
+                      </p>
+                    )}
+                  </>
+                )}
               </div>
             </div>
           ))}
