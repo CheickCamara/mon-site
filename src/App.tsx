@@ -176,7 +176,7 @@ function AuthModal({ onClose, onConnexion }: { onClose: () => void; onConnexion:
               Fermer
             </button>
           </div>
-        ) : (
+        ) : (<>
         <div className="auth-tabs">
           <button className={`auth-tab ${tab === 'login' ? 'active' : ''}`} onClick={() => changeTab('login')}>Connexion</button>
           <button className={`auth-tab ${tab === 'influenceur' ? 'active' : ''}`} onClick={() => changeTab('influenceur')}>Influenceur</button>
@@ -264,7 +264,7 @@ function AuthModal({ onClose, onConnexion }: { onClose: () => void; onConnexion:
             <p className="auth-terms">Ton dossier sera examiné par notre équipe sous 48h.</p>
           </form>
         )}
-        )}
+        </>)}
       </div>
     </div>
   )
