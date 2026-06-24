@@ -97,12 +97,16 @@ export default function ProfilRestaurant({ restaurantId, onRetour, estConnecte, 
           borderRadius: 10, padding: '8px 14px', color: '#fff', cursor: 'pointer', fontSize: '0.9rem',
         }}>← Retour</button>
 
-        <div style={{
-          width: 80, height: 80, borderRadius: '50%',
-          background: 'linear-gradient(135deg, #7c3aed, #a855f7)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: '2rem', margin: '0 auto 16px',
-        }}>🍽️</div>
+        {resto.image ? (
+          <img src={resto.image} alt={resto.nom} style={{ width: 90, height: 90, borderRadius: '50%', objectFit: 'cover', margin: '0 auto 16px', display: 'block', border: '3px solid rgba(255,255,255,0.2)' }} />
+        ) : (
+          <div style={{
+            width: 80, height: 80, borderRadius: '50%',
+            background: 'linear-gradient(135deg, #7c3aed, #a855f7)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: '2rem', margin: '0 auto 16px',
+          }}>🍽️</div>
+        )}
         <h1 style={{ color: '#fff', fontSize: '1.8rem', fontWeight: 800, margin: '0 0 6px' }}>{resto.nom}</h1>
         <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: '0.95rem', margin: '0 0 12px' }}>📍 {resto.adresse}</p>
         {moyenne && (

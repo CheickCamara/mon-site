@@ -31,6 +31,7 @@ type Restaurant = {
   telephone: string
   statut: string
   siret: string
+  image: string | null
 }
 
 type Offre = {
@@ -93,6 +94,13 @@ export default function EspaceRestaurateur({ utilisateur, onRetour }: Props) {
     contrepartie: 'post', nombre_places: '', tranche_min: '1000', tranche_max: '', conditions: '',
   })
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null)
+  const [editingResto, setEditingResto] = useState(false)
+  const [restoForm, setRestoForm] = useState({ nom: '', description: '', telephone: '', adresse: '' })
+  const [restoLoading, setRestoLoading] = useState(false)
+  const [restoSuccess, setRestoSuccess] = useState(false)
+  const [restoError, setRestoError] = useState('')
+  const [photoLoading, setPhotoLoading] = useState(false)
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null)
 
   const token = localStorage.getItem('token')
   const headers = { 'Authorization': `Bearer ${token}` }
@@ -104,6 +112,7 @@ export default function EspaceRestaurateur({ utilisateur, onRetour }: Props) {
       fetch(`${API}/restaurateur/candidatures`, { headers }).then(r => r.json()),
     ]).then(async ([resto, offresData, candData]) => {
       setRestaurant(resto)
+      setPhotoUrl(resto?.image || null)
       setOffres(Array.isArray(offresData) ? offresData : [])
       const cands = Array.isArray(candData) ? candData : []
       setCandidatures(cands)
@@ -154,6 +163,47 @@ export default function EspaceRestaurateur({ utilisateur, onRetour }: Props) {
       setAvisMsg(prev => ({ ...prev, [candId]: '⭐ Merci pour ton avis !' }))
     } else {
       setAvisMsg(prev => ({ ...prev, [candId]: data.error || 'Erreur' }))
+    }
+  }
+
+  const ouvrirEditionResto = () => {
+    if (!restaurant) return
+    setRestoForm({ nom: restaurant.nom, description: restaurant.description || '', telephone: restaurant.telephone || '', adresse: restaurant.adresse })
+    setEditingResto(true)
+    setRestoSuccess(false)
+    setRestoError('')
+  }
+
+  const sauvegarderResto = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setRestoLoading(true)
+    setRestoError('')
+    try {
+      const res = await fetch(`${API}/restaurateur/mon-restaurant`, {
+        method: 'PUT',
+        headers: { ...headers, 'Content-Type': 'application/json' },
+        body: JSON.stringify(restoForm),
+      })
+      const data = await res.json()
+      if (!res.ok) { setRestoError(data.error || 'Erreur'); return }
+      setRestaurant(prev => prev ? { ...prev, ...restoForm } : prev)
+      setRestoSuccess(true)
+      setEditingResto(false)
+    } finally {
+      setRestoLoading(false)
+    }
+  }
+
+  const uploadPhoto = async (file: File) => {
+    setPhotoLoading(true)
+    try {
+      const fd = new FormData()
+      fd.append('photo', file)
+      const res = await fetch(`${API}/restaurateur/mon-restaurant/photo`, { method: 'POST', headers, body: fd })
+      const data = await res.json()
+      if (res.ok) setPhotoUrl(data.url)
+    } finally {
+      setPhotoLoading(false)
     }
   }
 
@@ -292,10 +342,32 @@ export default function EspaceRestaurateur({ utilisateur, onRetour }: Props) {
           <div style={{ maxWidth: 560 }}>
             {restaurant ? (
               <>
+                {/* Carte infos + photo */}
                 <div style={{
                   background: 'var(--card-bg, var(--surface))', border: '1px solid var(--border)',
                   borderRadius: 12, padding: '20px 24px', marginBottom: 20,
                 }}>
+                  {/* Photo du restaurant */}
+                  <div style={{ marginBottom: 16 }}>
+                    {photoUrl ? (
+                      <img src={photoUrl} alt={restaurant.nom} style={{ width: '100%', height: 180, objectFit: 'cover', borderRadius: 10 }} />
+                    ) : (
+                      <div style={{ width: '100%', height: 140, borderRadius: 10, background: 'linear-gradient(135deg, #1a0533, #2d0a4e)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '3rem' }}>
+                        🍽️
+                      </div>
+                    )}
+                    <label style={{ display: 'inline-block', marginTop: 10, cursor: 'pointer' }}>
+                      <span style={{
+                        padding: '7px 16px', borderRadius: 8, fontSize: '0.82rem', fontWeight: 600,
+                        background: 'var(--accent-bg)', color: 'var(--accent)', border: '1px solid var(--accent-border)', cursor: 'pointer',
+                      }}>
+                        {photoLoading ? 'Envoi…' : '📷 Changer la photo'}
+                      </span>
+                      <input type="file" accept="image/*" style={{ display: 'none' }} disabled={photoLoading}
+                        onChange={e => { const f = e.target.files?.[0]; if (f) uploadPhoto(f) }} />
+                    </label>
+                  </div>
+
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 8 }}>
                     <div>
                       <h2 style={{ fontSize: '1.3rem', fontWeight: 700, marginBottom: 4 }}>{restaurant.nom}</h2>
@@ -303,10 +375,7 @@ export default function EspaceRestaurateur({ utilisateur, onRetour }: Props) {
                       {restaurant.telephone && <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginTop: 4 }}>📞 {restaurant.telephone}</p>}
                       {restaurant.siret && <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: 4 }}>SIRET : {restaurant.siret}</p>}
                     </div>
-                    <span style={{
-                      fontWeight: 700, fontSize: '0.85rem',
-                      color: STATUT_RESTAURANT[restaurant.statut]?.color ?? '#888',
-                    }}>
+                    <span style={{ fontWeight: 700, fontSize: '0.85rem', color: STATUT_RESTAURANT[restaurant.statut]?.color ?? '#888' }}>
                       {STATUT_RESTAURANT[restaurant.statut]?.label ?? restaurant.statut}
                     </span>
                   </div>
@@ -321,7 +390,74 @@ export default function EspaceRestaurateur({ utilisateur, onRetour }: Props) {
                       </span>
                     </p>
                   )}
+
+                  <button onClick={ouvrirEditionResto} style={{
+                    marginTop: 16, padding: '8px 18px', borderRadius: 8, border: 'none', cursor: 'pointer',
+                    background: 'var(--primary)', color: '#fff', fontWeight: 700, fontSize: '0.85rem',
+                  }}>
+                    ✏️ Modifier les informations
+                  </button>
                 </div>
+
+                {/* Formulaire d'édition */}
+                {editingResto && (
+                  <form onSubmit={sauvegarderResto} style={{
+                    background: 'var(--card-bg, var(--surface))', border: '1px solid var(--border)',
+                    borderRadius: 12, padding: '24px', marginBottom: 20, display: 'flex', flexDirection: 'column', gap: 14,
+                  }}>
+                    <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700 }}>✏️ Modifier mon restaurant</h3>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Nom du restaurant *</label>
+                      <input value={restoForm.nom} onChange={e => setRestoForm(f => ({ ...f, nom: e.target.value }))} required
+                        style={{ padding: '10px 14px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)', fontSize: '0.9rem', fontFamily: 'inherit' }} />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Description publique</label>
+                      <textarea value={restoForm.description} onChange={e => setRestoForm(f => ({ ...f, description: e.target.value }))} rows={4}
+                        placeholder="Décrivez votre restaurant, votre cuisine, l'ambiance…"
+                        style={{ padding: '10px 14px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)', fontSize: '0.9rem', fontFamily: 'inherit', resize: 'vertical' }} />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Téléphone</label>
+                      <input value={restoForm.telephone} onChange={e => setRestoForm(f => ({ ...f, telephone: e.target.value }))}
+                        placeholder="01 23 45 67 89"
+                        style={{ padding: '10px 14px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)', fontSize: '0.9rem', fontFamily: 'inherit' }} />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Adresse *</label>
+                      <input value={restoForm.adresse} onChange={e => setRestoForm(f => ({ ...f, adresse: e.target.value }))} required
+                        style={{ padding: '10px 14px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)', fontSize: '0.9rem', fontFamily: 'inherit' }} />
+                    </div>
+
+                    {restoError && <p style={{ color: '#ef4444', fontSize: '0.85rem', margin: 0 }}>❌ {restoError}</p>}
+
+                    <div style={{ display: 'flex', gap: 10 }}>
+                      <button type="submit" disabled={restoLoading} style={{
+                        flex: 1, padding: '10px', borderRadius: 8, border: 'none', cursor: 'pointer',
+                        background: 'var(--primary)', color: '#fff', fontWeight: 700, fontSize: '0.9rem',
+                        opacity: restoLoading ? 0.7 : 1,
+                      }}>
+                        {restoLoading ? 'Enregistrement…' : 'Enregistrer'}
+                      </button>
+                      <button type="button" onClick={() => setEditingResto(false)} style={{
+                        padding: '10px 18px', borderRadius: 8, border: '1px solid var(--border)', cursor: 'pointer',
+                        background: 'transparent', color: 'var(--text)', fontWeight: 600, fontSize: '0.9rem',
+                      }}>
+                        Annuler
+                      </button>
+                    </div>
+                  </form>
+                )}
+
+                {restoSuccess && (
+                  <div style={{ background: '#f0fdf4', border: '1px solid #86efac', borderRadius: 10, padding: '14px 18px', color: '#166534', fontSize: '0.9rem', marginBottom: 16 }}>
+                    ✅ Informations mises à jour avec succès.
+                  </div>
+                )}
 
                 {restaurant.statut === 'en_attente' && (
                   <div style={{
