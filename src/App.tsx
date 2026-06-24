@@ -290,6 +290,7 @@ type Profil = {
   abonnes: number
   statut: string
   date_inscription: string
+  collaborations_honorees: number
 }
 
 function MonEspace({ utilisateur, onRetour, onNomChange }: { utilisateur: Utilisateur; onRetour: () => void; onNomChange: (nom: string) => void }) {
@@ -562,17 +563,36 @@ function MonEspace({ utilisateur, onRetour, onNomChange }: { utilisateur: Utilis
         {onglet === 'profil' && (
           <div style={{ maxWidth: 480 }}>
             {profil && (
-              <div style={{
-                background: 'var(--card-bg, var(--surface))', border: '1px solid var(--border)',
-                borderRadius: 12, padding: '16px 20px', marginBottom: 24,
-                display: 'flex', alignItems: 'center', gap: 12,
-              }}>
-                <span style={{ fontSize: '1.5rem' }}>📊</span>
-                <div>
-                  <p style={{ fontWeight: 600, fontSize: '0.9rem' }}>Statut du compte</p>
-                  <p style={{ color: STATUT_PROFIL[profil.statut]?.color ?? '#888', fontWeight: 700 }}>
-                    {STATUT_PROFIL[profil.statut]?.label ?? profil.statut}
-                  </p>
+              <div style={{ display: 'flex', gap: 12, marginBottom: 24, flexWrap: 'wrap' }}>
+                <div style={{
+                  flex: 1, minWidth: 160,
+                  background: 'var(--card-bg, var(--surface))', border: '1px solid var(--border)',
+                  borderRadius: 12, padding: '16px 20px',
+                  display: 'flex', alignItems: 'center', gap: 12,
+                }}>
+                  <span style={{ fontSize: '1.5rem' }}>📊</span>
+                  <div>
+                    <p style={{ fontWeight: 600, fontSize: '0.9rem', margin: 0 }}>Statut du compte</p>
+                    <p style={{ color: STATUT_PROFIL[profil.statut]?.color ?? '#888', fontWeight: 700, margin: 0 }}>
+                      {STATUT_PROFIL[profil.statut]?.label ?? profil.statut}
+                    </p>
+                  </div>
+                </div>
+                <div style={{
+                  flex: 1, minWidth: 160,
+                  background: 'linear-gradient(135deg, #7c3aed, #a78bfa)',
+                  borderRadius: 12, padding: '16px 20px',
+                  display: 'flex', alignItems: 'center', gap: 12,
+                }}>
+                  <span style={{ fontSize: '1.8rem' }}>🏆</span>
+                  <div>
+                    <p style={{ fontWeight: 800, fontSize: '1.6rem', color: '#fff', margin: 0, lineHeight: 1 }}>
+                      {profil.collaborations_honorees}
+                    </p>
+                    <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.82rem', margin: 0 }}>
+                      collaboration{profil.collaborations_honorees !== 1 ? 's' : ''} honorée{profil.collaborations_honorees !== 1 ? 's' : ''}
+                    </p>
+                  </div>
                 </div>
               </div>
             )}
