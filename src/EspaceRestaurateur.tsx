@@ -81,6 +81,9 @@ export default function EspaceRestaurateur({ utilisateur, onRetour }: Props) {
   const [offreLoading, setOffreLoading] = useState(false)
   const [offreSuccess, setOffreSuccess] = useState(false)
   const [offreError, setOffreError] = useState('')
+  const [avisDeposes, setAvisDeposes] = useState<Record<number, { note: number; commentaire: string | null }>>({})
+  const [avisForm, setAvisForm] = useState<Record<number, { note: number; commentaire: string }>>({})
+  const [avisMsg, setAvisMsg] = useState<Record<number, string>>({})
   const [offreEnEdition, setOffreEnEdition] = useState<Offre | null>(null)
   const [editForm, setEditForm] = useState({
     titre: '', description: '', menu: '', valeur_indicative: '',
@@ -110,8 +113,33 @@ export default function EspaceRestaurateur({ utilisateur, onRetour }: Props) {
       const map: Record<number, number> = {}
       counts.forEach(({ id, count }) => { map[id] = count })
       setNonLus(map)
+      // Charger les avis déjà déposés pour les collaborations honorées
+      const honorees = cands.filter((c: Candidature) => c.statut === 'honoree')
+      const avisExistants: Record<number, { note: number; commentaire: string | null }> = {}
+      await Promise.all(honorees.map((c: Candidature) =>
+        fetch(`${API}/avis/${c.id}`, { headers }).then(r => r.json())
+          .then(d => { if (d) avisExistants[c.id] = d }).catch(() => {})
+      ))
+      setAvisDeposes(avisExistants)
     }).catch(() => setLoading(false))
   }, [])
+
+  const soumettreAvis = async (candId: number) => {
+    const form = avisForm[candId]
+    if (!form?.note) return
+    const res = await fetch(`${API}/avis`, {
+      method: 'POST',
+      headers: { ...headers, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ candidature_id: candId, note: form.note, commentaire: form.commentaire }),
+    })
+    const data = await res.json()
+    if (res.ok) {
+      setAvisDeposes(prev => ({ ...prev, [candId]: { note: form.note, commentaire: form.commentaire } }))
+      setAvisMsg(prev => ({ ...prev, [candId]: '⭐ Merci pour ton avis !' }))
+    } else {
+      setAvisMsg(prev => ({ ...prev, [candId]: data.error || 'Erreur' }))
+    }
+  }
 
   const ouvrirEdition = (o: Offre) => {
     setOffreEnEdition(o)
@@ -632,6 +660,40 @@ export default function EspaceRestaurateur({ utilisateur, onRetour }: Props) {
                       )}
                     </div>
                   </div>
+                  {/* Notation de l'influenceur — collaboration honorée */}
+                  {c.statut === 'honoree' && (
+                    <div style={{ borderTop: '1px solid var(--border)', paddingTop: 12, marginTop: 4 }}>
+                      {avisDeposes[c.id] ? (
+                        <p style={{ fontSize: '0.88rem', color: '#22c55e', fontWeight: 600 }}>
+                          ⭐ Tu as noté cet influenceur {avisDeposes[c.id].note}/5
+                          {avisDeposes[c.id].commentaire && ` — "${avisDeposes[c.id].commentaire}"`}
+                        </p>
+                      ) : (
+                        <div>
+                          <p style={{ fontSize: '0.88rem', fontWeight: 600, marginBottom: 8 }}>
+                            🏆 Collaboration confirmée ! Comment était l'influenceur ?
+                          </p>
+                          <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+                            {[1,2,3,4,5].map(n => (
+                              <button key={n} onClick={() => setAvisForm(p => ({ ...p, [c.id]: { ...p[c.id], note: n, commentaire: p[c.id]?.commentaire ?? '' } }))}
+                                style={{ fontSize: '1.4rem', background: 'none', border: 'none', cursor: 'pointer', opacity: (avisForm[c.id]?.note ?? 0) >= n ? 1 : 0.3, transition: 'opacity 0.15s' }}>
+                                ⭐
+                              </button>
+                            ))}
+                            {avisForm[c.id]?.note && <span style={{ alignSelf: 'center', fontSize: '0.85rem', color: 'var(--text-muted)' }}>{avisForm[c.id].note}/5</span>}
+                          </div>
+                          <textarea placeholder="Un commentaire ? (optionnel)" value={avisForm[c.id]?.commentaire ?? ''}
+                            onChange={e => setAvisForm(p => ({ ...p, [c.id]: { note: p[c.id]?.note ?? 0, commentaire: e.target.value } }))}
+                            rows={2} style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)', fontSize: '0.85rem', resize: 'vertical', boxSizing: 'border-box', marginBottom: 8 }} />
+                          <button onClick={() => soumettreAvis(c.id)} disabled={!avisForm[c.id]?.note}
+                            style={{ padding: '8px 18px', borderRadius: 8, border: 'none', background: 'var(--primary)', color: '#fff', fontWeight: 700, fontSize: '0.88rem', cursor: 'pointer', opacity: !avisForm[c.id]?.note ? 0.5 : 1 }}>
+                            Envoyer mon avis
+                          </button>
+                          {avisMsg[c.id] && <p style={{ fontSize: '0.85rem', marginTop: 6, color: avisMsg[c.id].startsWith('⭐') ? '#22c55e' : '#ef4444' }}>{avisMsg[c.id]}</p>}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )
             })}
