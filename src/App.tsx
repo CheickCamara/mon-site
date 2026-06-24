@@ -325,10 +325,12 @@ function MonEspace({ utilisateur, onRetour, onNomChange }: { utilisateur: Utilis
     setUploading(prev => ({ ...prev, [candId]: true }))
     try {
       // Upload du fichier
+      const formData = new FormData()
+      formData.append('fichier', file)
       const uploadR = await fetch(`${API}/mon-espace/candidatures/${candId}/upload-story`, {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': file.type },
-        body: file,
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: formData,
       })
       const uploadData = await uploadR.json()
       if (!uploadR.ok) { setPubMsg(prev => ({ ...prev, [candId]: '❌ ' + uploadData.error })); return }
