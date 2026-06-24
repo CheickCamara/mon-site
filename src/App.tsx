@@ -43,12 +43,6 @@ type Offre = {
   restaurants: { nom: string; adresse: string; image: string }
 }
 
-const CONTREPARTIE_LABEL: Record<string, string> = {
-  story: '📱 Story',
-  post: '📸 Post',
-  reel: '🎬 Reel / Vidéo',
-}
-
 const PHOTOS_PAR_CUISINE: Record<string, string> = {
   'japonais':    'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=400&q=80',
   'italien':     'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=400&q=80',
@@ -206,9 +200,119 @@ function AuthModal({ onClose, onConnexion }: { onClose: () => void; onConnexion:
   )
 }
 
+const STATUT_CANDIDATURE: Record<string, { label: string; color: string }> = {
+  en_attente: { label: '⏳ En attente de validation', color: '#f59e0b' },
+  valide:     { label: '✅ Acceptée', color: '#22c55e' },
+  refuse:     { label: '❌ Refusée', color: '#ef4444' },
+}
+
+const CONTREPARTIE_LABEL: Record<string, string> = {
+  story: '📱 Story',
+  post:  '📸 Post',
+  reel:  '🎬 Reel / Vidéo',
+}
+
+type MaCandidature = {
+  id: number
+  statut: string
+  date_candidature: string
+  offres: {
+    titre: string
+    contrepartie: string
+    valeur_indicative: number
+    restaurants: { nom: string; adresse: string }
+  } | null
+}
+
+function MonEspace({ utilisateur, onRetour }: { utilisateur: Utilisateur; onRetour: () => void }) {
+  const [candidatures, setCandidatures] = useState<MaCandidature[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const token = localStorage.getItem('token')
+    fetch(`${API}/mon-espace/candidatures`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+      .then(r => r.json())
+      .then(data => { setCandidatures(data); setLoading(false) })
+      .catch(() => setLoading(false))
+  }, [])
+
+  return (
+    <div style={{ minHeight: '100svh', background: 'var(--bg)', padding: '0 0 60px' }}>
+      <nav className="lp-nav">
+        <span className="lp-logo">Pop Fluence</span>
+        <button className="btn btn-ghost btn-sm" onClick={onRetour}>← Retour aux offres</button>
+      </nav>
+
+      <div style={{ maxWidth: 800, margin: '60px auto', padding: '0 20px' }}>
+        <h1 style={{ fontSize: '1.8rem', fontWeight: 700, marginBottom: 4 }}>
+          Bonjour {utilisateur.nom} 👋
+        </h1>
+        <p style={{ color: 'var(--text-muted)', marginBottom: 40 }}>Voici le suivi de tes candidatures</p>
+
+        {loading && <p>Chargement…</p>}
+
+        {!loading && candidatures.length === 0 && (
+          <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-muted)' }}>
+            <p style={{ fontSize: '2rem' }}>🍽️</p>
+            <p>Tu n'as pas encore candidaté à une offre.</p>
+            <button className="btn btn-primary" style={{ marginTop: 16 }} onClick={onRetour}>
+              Voir les offres
+            </button>
+          </div>
+        )}
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {candidatures.map(c => {
+            const statut = STATUT_CANDIDATURE[c.statut] ?? { label: c.statut, color: '#888' }
+            return (
+              <div key={c.id} style={{
+                background: 'var(--card-bg, var(--surface))',
+                border: '1px solid var(--border)',
+                borderRadius: 12,
+                padding: '20px 24px',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                gap: 16,
+                flexWrap: 'wrap',
+              }}>
+                <div>
+                  <p style={{ fontWeight: 700, fontSize: '1rem', marginBottom: 4 }}>
+                    {c.offres?.titre ?? '—'}
+                  </p>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                    🍽️ {c.offres?.restaurants?.nom ?? '—'} · {c.offres?.restaurants?.adresse ?? ''}
+                  </p>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: 4 }}>
+                    {CONTREPARTIE_LABEL[c.offres?.contrepartie ?? ''] ?? ''}
+                    {c.offres?.valeur_indicative ? ` · Valeur ${c.offres.valeur_indicative} €` : ''}
+                  </p>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.78rem', marginTop: 4 }}>
+                    Candidaté le {new Date(c.date_candidature).toLocaleDateString('fr-FR')}
+                  </p>
+                </div>
+                <span style={{
+                  fontWeight: 600,
+                  fontSize: '0.85rem',
+                  color: statut.color,
+                  whiteSpace: 'nowrap',
+                }}>
+                  {statut.label}
+                </span>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function App() {
   const { theme, toggle } = useTheme()
-  const [page, setPage] = useState<'home' | 'map'>('home')
+  const [page, setPage] = useState<'home' | 'map' | 'espace'>('home')
   const [authOpen, setAuthOpen] = useState(false)
   const [utilisateur, setUtilisateur] = useState<Utilisateur | null>(() => {
     try { return JSON.parse(localStorage.getItem('utilisateur') || 'null') } catch { return null }
@@ -256,6 +360,10 @@ export default function App() {
       .catch(() => { setFetchError(true); setFetchLoading(false) })
   }, [])
 
+  if (page === 'espace' && utilisateur) return (
+    <MonEspace utilisateur={utilisateur} onRetour={() => setPage('home')} />
+  )
+
   if (page === 'map') return (
     <div style={{ background: 'var(--bg)', minHeight: '100svh' }}>
       <nav className="lp-nav">
@@ -282,7 +390,7 @@ export default function App() {
           </button>
           {utilisateur ? (
             <>
-              <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>👋 {utilisateur.nom}</span>
+              <button className="btn btn-ghost btn-sm" onClick={() => setPage('espace')}>👤 Mon Espace</button>
               <button className="btn btn-ghost btn-sm" onClick={deconnexion}>Déconnexion</button>
             </>
           ) : (
