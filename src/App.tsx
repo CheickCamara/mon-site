@@ -269,6 +269,8 @@ type MaCandidature = {
   id: number
   statut: string
   date_candidature: string
+  lien_publication: string | null
+  post_publie: boolean
   offres: {
     titre: string
     contrepartie: string
@@ -295,8 +297,27 @@ function MonEspace({ utilisateur, onRetour, onNomChange }: { utilisateur: Utilis
   const [form, setForm] = useState({ nom: '', reseau: '', abonnes: '', mot_de_passe: '' })
   const [msg, setMsg] = useState('')
   const [saving, setSaving] = useState(false)
+  const [liens, setLiens] = useState<Record<number, string>>({})
+  const [pubMsg, setPubMsg] = useState<Record<number, string>>({})
 
   const token = localStorage.getItem('token')
+
+  const soumettreLien = async (candId: number) => {
+    const lien = liens[candId]
+    if (!lien) return
+    const r = await fetch(`${API}/mon-espace/candidatures/${candId}/publication`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ lien_publication: lien }),
+    })
+    const data = await r.json()
+    if (r.ok) {
+      setPubMsg(prev => ({ ...prev, [candId]: '✅ ' + data.message }))
+      setCandidatures(prev => prev.map(c => c.id === candId ? { ...c, post_publie: true, lien_publication: lien } : c))
+    } else {
+      setPubMsg(prev => ({ ...prev, [candId]: '❌ ' + data.error }))
+    }
+  }
 
   useEffect(() => {
     fetch(`${API}/mon-espace/candidatures`, { headers: { 'Authorization': `Bearer ${token}` } })
@@ -387,24 +408,66 @@ function MonEspace({ utilisateur, onRetour, onNomChange }: { utilisateur: Utilis
                   <div key={c.id} style={{
                     background: 'var(--card-bg, var(--surface))', border: '1px solid var(--border)',
                     borderRadius: 12, padding: '20px 24px', display: 'flex',
-                    justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap',
+                    flexDirection: 'column', gap: 12,
                   }}>
-                    <div>
-                      <p style={{ fontWeight: 700, fontSize: '1rem', marginBottom: 4 }}>{c.offres?.titre ?? '—'}</p>
-                      <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                        🍽️ {c.offres?.restaurants?.nom ?? '—'} · {c.offres?.restaurants?.adresse ?? ''}
-                      </p>
-                      <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: 4 }}>
-                        {CONTREPARTIE_LABEL[c.offres?.contrepartie ?? ''] ?? ''}
-                        {c.offres?.valeur_indicative ? ` · Valeur ${c.offres.valeur_indicative} €` : ''}
-                      </p>
-                      <p style={{ color: 'var(--text-muted)', fontSize: '0.78rem', marginTop: 4 }}>
-                        Candidaté le {new Date(c.date_candidature).toLocaleDateString('fr-FR')}
-                      </p>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 8 }}>
+                      <div>
+                        <p style={{ fontWeight: 700, fontSize: '1rem', marginBottom: 4 }}>{c.offres?.titre ?? '—'}</p>
+                        <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                          🍽️ {c.offres?.restaurants?.nom ?? '—'} · {c.offres?.restaurants?.adresse ?? ''}
+                        </p>
+                        <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: 4 }}>
+                          {CONTREPARTIE_LABEL[c.offres?.contrepartie ?? ''] ?? ''}
+                          {c.offres?.valeur_indicative ? ` · Valeur ${c.offres.valeur_indicative} €` : ''}
+                        </p>
+                        <p style={{ color: 'var(--text-muted)', fontSize: '0.78rem', marginTop: 4 }}>
+                          Candidaté le {new Date(c.date_candidature).toLocaleDateString('fr-FR')}
+                        </p>
+                      </div>
+                      <span style={{ fontWeight: 600, fontSize: '0.85rem', color: statut.color, whiteSpace: 'nowrap' }}>
+                        {statut.label}
+                      </span>
                     </div>
-                    <span style={{ fontWeight: 600, fontSize: '0.85rem', color: statut.color, whiteSpace: 'nowrap' }}>
-                      {statut.label}
-                    </span>
+
+                    {/* Bloc preuve de publication */}
+                    {c.statut === 'valide' && (
+                      <div style={{ borderTop: '1px solid var(--border)', paddingTop: 12 }}>
+                        {c.post_publie ? (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.88rem' }}>
+                            <span style={{ color: '#22c55e', fontWeight: 700 }}>✅ Publication soumise</span>
+                            {c.lien_publication && (
+                              <a href={c.lien_publication} target="_blank" rel="noreferrer"
+                                style={{ color: 'var(--primary)', fontSize: '0.82rem' }}>
+                                Voir le post →
+                              </a>
+                            )}
+                          </div>
+                        ) : (
+                          <div>
+                            <p style={{ fontSize: '0.85rem', fontWeight: 600, marginBottom: 8 }}>
+                              🎉 Ta candidature est acceptée ! Soumets le lien de ta publication après ton repas.
+                            </p>
+                            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                              <input
+                                type="url"
+                                placeholder="https://www.instagram.com/p/..."
+                                value={liens[c.id] ?? ''}
+                                onChange={e => setLiens(prev => ({ ...prev, [c.id]: e.target.value }))}
+                                style={{ flex: 1, padding: '8px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)', fontSize: '0.9rem', minWidth: 200 }}
+                              />
+                              <button className="btn btn-primary" style={{ padding: '8px 16px' }} onClick={() => soumettreLien(c.id)}>
+                                Envoyer
+                              </button>
+                            </div>
+                            {pubMsg[c.id] && (
+                              <p style={{ fontSize: '0.85rem', marginTop: 6, color: pubMsg[c.id].startsWith('✅') ? '#22c55e' : '#ef4444' }}>
+                                {pubMsg[c.id]}
+                              </p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )
               })}
