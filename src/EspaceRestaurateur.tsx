@@ -15,6 +15,7 @@ const CONTREPARTIE_LABEL: Record<string, string> = {
 }
 
 const STATUT_OFFRE: Record<string, { label: string; color: string }> = {
+  en_attente_validation: { label: '⏳ En attente de validation', color: '#f59e0b' },
   active:    { label: '✅ Active',    color: '#22c55e' },
   en_pause:  { label: '⏸ En pause',  color: '#f59e0b' },
   cloturee:  { label: '🔒 Clôturée', color: '#6b7280' },
@@ -65,6 +66,13 @@ export default function EspaceRestaurateur({ utilisateur, onRetour }: Props) {
   const [candidatures, setCandidatures] = useState<Candidature[]>([])
   const [loading, setLoading] = useState(true)
   const [actionLoading, setActionLoading] = useState<number | null>(null)
+  const [showFormulaireOffre, setShowFormulaireOffre] = useState(false)
+  const [newOffre, setNewOffre] = useState({
+    titre: '', description: '', menu: '', valeur_indicative: '',
+    contrepartie: 'post', nombre_places: '', tranche_min: '1000', tranche_max: '', conditions: '',
+  })
+  const [offreLoading, setOffreLoading] = useState(false)
+  const [offreSuccess, setOffreSuccess] = useState(false)
 
   const token = localStorage.getItem('token')
   const headers = { 'Authorization': `Bearer ${token}` }
@@ -81,6 +89,32 @@ export default function EspaceRestaurateur({ utilisateur, onRetour }: Props) {
       setLoading(false)
     }).catch(() => setLoading(false))
   }, [])
+
+  const soumettreOffre = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setOffreLoading(true)
+    setOffreSuccess(false)
+    try {
+      const res = await fetch(`${API}/restaurateur/offres`, {
+        method: 'POST',
+        headers: { ...headers, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...newOffre,
+          valeur_indicative: newOffre.valeur_indicative ? Number(newOffre.valeur_indicative) : null,
+          nombre_places: Number(newOffre.nombre_places),
+          tranche_min: Number(newOffre.tranche_min),
+          tranche_max: newOffre.tranche_max ? Number(newOffre.tranche_max) : null,
+        }),
+      })
+      if (res.ok) {
+        setOffreSuccess(true)
+        setNewOffre({ titre: '', description: '', menu: '', valeur_indicative: '', contrepartie: 'post', nombre_places: '', tranche_min: '1000', tranche_max: '', conditions: '' })
+        setShowFormulaireOffre(false)
+      }
+    } finally {
+      setOffreLoading(false)
+    }
+  }
 
   const traiterCandidature = async (id: number, statut: 'valide' | 'refuse') => {
     setActionLoading(id)
@@ -183,11 +217,114 @@ export default function EspaceRestaurateur({ utilisateur, onRetour }: Props) {
         {/* Mes offres */}
         {!loading && onglet === 'offres' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {offres.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-muted)' }}>
+            {/* Bouton créer + message succès */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <button onClick={() => { setShowFormulaireOffre(v => !v); setOffreSuccess(false) }} style={{
+                padding: '10px 20px', borderRadius: 8, border: 'none', cursor: 'pointer',
+                background: 'var(--primary)', color: '#fff', fontWeight: 700, fontSize: '0.9rem',
+              }}>
+                {showFormulaireOffre ? '✕ Annuler' : '+ Proposer une offre'}
+              </button>
+            </div>
+
+            {offreSuccess && (
+              <div style={{ background: '#f0fdf4', border: '1px solid #86efac', borderRadius: 10, padding: '14px 18px', color: '#166534', fontSize: '0.9rem' }}>
+                ✅ Ton offre a été soumise et sera visible après validation par l'équipe Pop Fluence.
+              </div>
+            )}
+
+            {/* Formulaire de création */}
+            {showFormulaireOffre && (
+              <form onSubmit={soumettreOffre} style={{
+                background: 'var(--card-bg, var(--surface))', border: '1px solid var(--border)',
+                borderRadius: 12, padding: '24px', display: 'flex', flexDirection: 'column', gap: 16,
+              }}>
+                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700 }}>Nouvelle offre</h3>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  <div style={{ gridColumn: '1 / -1' }}>
+                    <label style={{ fontSize: '0.85rem', fontWeight: 600, display: 'block', marginBottom: 4 }}>Titre de l'offre *</label>
+                    <input required value={newOffre.titre} onChange={e => setNewOffre(p => ({ ...p, titre: e.target.value }))}
+                      placeholder="ex : Menu dégustation 5 plats" style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg)', color: 'inherit', fontSize: '0.9rem', boxSizing: 'border-box' }} />
+                  </div>
+
+                  <div style={{ gridColumn: '1 / -1' }}>
+                    <label style={{ fontSize: '0.85rem', fontWeight: 600, display: 'block', marginBottom: 4 }}>Description</label>
+                    <textarea value={newOffre.description} onChange={e => setNewOffre(p => ({ ...p, description: e.target.value }))}
+                      placeholder="Décris l'expérience proposée…" rows={3}
+                      style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg)', color: 'inherit', fontSize: '0.9rem', resize: 'vertical', boxSizing: 'border-box' }} />
+                  </div>
+
+                  <div style={{ gridColumn: '1 / -1' }}>
+                    <label style={{ fontSize: '0.85rem', fontWeight: 600, display: 'block', marginBottom: 4 }}>Menu proposé</label>
+                    <textarea value={newOffre.menu} onChange={e => setNewOffre(p => ({ ...p, menu: e.target.value }))}
+                      placeholder="Entrée, plat, dessert…" rows={2}
+                      style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg)', color: 'inherit', fontSize: '0.9rem', resize: 'vertical', boxSizing: 'border-box' }} />
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '0.85rem', fontWeight: 600, display: 'block', marginBottom: 4 }}>Contrepartie *</label>
+                    <select required value={newOffre.contrepartie} onChange={e => setNewOffre(p => ({ ...p, contrepartie: e.target.value }))}
+                      style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg)', color: 'inherit', fontSize: '0.9rem' }}>
+                      <option value="post">📸 Post</option>
+                      <option value="story">📱 Story</option>
+                      <option value="reel">🎬 Reel</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '0.85rem', fontWeight: 600, display: 'block', marginBottom: 4 }}>Nombre de places *</label>
+                    <input required type="number" min="1" value={newOffre.nombre_places} onChange={e => setNewOffre(p => ({ ...p, nombre_places: e.target.value }))}
+                      placeholder="ex : 3"
+                      style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg)', color: 'inherit', fontSize: '0.9rem', boxSizing: 'border-box' }} />
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '0.85rem', fontWeight: 600, display: 'block', marginBottom: 4 }}>Abonnés minimum</label>
+                    <input type="number" min="1000" value={newOffre.tranche_min} onChange={e => setNewOffre(p => ({ ...p, tranche_min: e.target.value }))}
+                      placeholder="1000"
+                      style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg)', color: 'inherit', fontSize: '0.9rem', boxSizing: 'border-box' }} />
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '0.85rem', fontWeight: 600, display: 'block', marginBottom: 4 }}>Abonnés maximum <span style={{ fontWeight: 400, color: 'var(--text-muted)' }}>(optionnel)</span></label>
+                    <input type="number" value={newOffre.tranche_max} onChange={e => setNewOffre(p => ({ ...p, tranche_max: e.target.value }))}
+                      placeholder="sans limite"
+                      style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg)', color: 'inherit', fontSize: '0.9rem', boxSizing: 'border-box' }} />
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '0.85rem', fontWeight: 600, display: 'block', marginBottom: 4 }}>Valeur indicative (€) <span style={{ fontWeight: 400, color: 'var(--text-muted)' }}>(optionnel)</span></label>
+                    <input type="number" value={newOffre.valeur_indicative} onChange={e => setNewOffre(p => ({ ...p, valeur_indicative: e.target.value }))}
+                      placeholder="ex : 60"
+                      style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg)', color: 'inherit', fontSize: '0.9rem', boxSizing: 'border-box' }} />
+                  </div>
+
+                  <div style={{ gridColumn: '1 / -1' }}>
+                    <label style={{ fontSize: '0.85rem', fontWeight: 600, display: 'block', marginBottom: 4 }}>Conditions <span style={{ fontWeight: 400, color: 'var(--text-muted)' }}>(optionnel)</span></label>
+                    <textarea value={newOffre.conditions} onChange={e => setNewOffre(p => ({ ...p, conditions: e.target.value }))}
+                      placeholder="ex : Réservation obligatoire, valable du lundi au jeudi…" rows={2}
+                      style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg)', color: 'inherit', fontSize: '0.9rem', resize: 'vertical', boxSizing: 'border-box' }} />
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <button type="submit" disabled={offreLoading} style={{
+                    padding: '12px 28px', borderRadius: 8, border: 'none', cursor: 'pointer',
+                    background: 'var(--primary)', color: '#fff', fontWeight: 700, fontSize: '0.95rem',
+                    opacity: offreLoading ? 0.6 : 1,
+                  }}>
+                    {offreLoading ? 'Envoi…' : 'Soumettre l\'offre'}
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {/* Liste des offres existantes */}
+            {offres.length === 0 && !showFormulaireOffre ? (
+              <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-muted)' }}>
                 <p style={{ fontSize: '2rem' }}>🎁</p>
-                <p>Aucune offre créée pour l'instant.</p>
-                <p style={{ fontSize: '0.85rem', marginTop: 8 }}>Les offres sont créées par l'équipe Pop Fluence pour toi.</p>
+                <p>Aucune offre pour l'instant. Propose ta première offre !</p>
               </div>
             ) : offres.map(o => {
               const s = STATUT_OFFRE[o.statut] ?? { label: o.statut, color: '#888' }
