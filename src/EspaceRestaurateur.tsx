@@ -119,7 +119,7 @@ export default function EspaceRestaurateur({ utilisateur, onRetour }: Props) {
     }
   }
 
-  const traiterCandidature = async (id: number, statut: 'valide' | 'refuse') => {
+  const traiterCandidature = async (id: number, statut: 'valide' | 'refuse' | 'honoree') => {
     setActionLoading(id)
     try {
       await fetch(`${API}/restaurateur/candidatures/${id}`, {
