@@ -79,15 +79,15 @@ type Utilisateur = {
 }
 
 function AuthModal({ onClose, onConnexion }: { onClose: () => void; onConnexion: (u: Utilisateur) => void }) {
-  const [tab, setTab] = useState<'login' | 'signup'>('login')
+  const [tab, setTab] = useState<'login' | 'influenceur' | 'restaurateur'>('login')
   const [form, setForm] = useState({ email: '', password: '', name: '', network: '', followers: '' })
+  const [resto, setResto] = useState({ nom: '', email: '', mot_de_passe: '', nom_etablissement: '', adresse: '', siret: '', telephone: '' })
   const [erreur, setErreur] = useState('')
   const [loading, setLoading] = useState(false)
 
-  const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setForm(f => ({ ...f, [k]: e.target.value }))
-    setErreur('')
-  }
+  const changeTab = (t: typeof tab) => { setTab(t); setErreur('') }
+  const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => { setForm(f => ({ ...f, [k]: e.target.value })); setErreur('') }
+  const setR = (k: string) => (e: React.ChangeEvent<HTMLInputElement>) => { setResto(f => ({ ...f, [k]: e.target.value })); setErreur('') }
 
   const handleConnexion = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -111,20 +111,36 @@ function AuthModal({ onClose, onConnexion }: { onClose: () => void; onConnexion:
     }
   }
 
-  const handleInscription = async (e: React.FormEvent) => {
+  const handleInscriptionInfluenceur = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     try {
       const r = await fetch(`${API}/auth/inscription-influenceur`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          nom: form.name,
-          email: form.email,
-          mot_de_passe: form.password,
-          reseau: form.network,
-          abonnes: Number(form.followers),
-        }),
+        body: JSON.stringify({ nom: form.name, email: form.email, mot_de_passe: form.password, reseau: form.network, abonnes: Number(form.followers) }),
+      })
+      const data = await r.json()
+      if (!r.ok) { setErreur(data.error); return }
+      localStorage.setItem('token', data.token)
+      localStorage.setItem('utilisateur', JSON.stringify(data.utilisateur))
+      onConnexion(data.utilisateur)
+      onClose()
+    } catch {
+      setErreur('Erreur lors de l\'inscription, réessaie.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleInscriptionRestaurateur = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    try {
+      const r = await fetch(`${API}/auth/inscription-restaurateur`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(resto),
       })
       const data = await r.json()
       if (!r.ok) { setErreur(data.error); return }
@@ -141,19 +157,16 @@ function AuthModal({ onClose, onConnexion }: { onClose: () => void; onConnexion:
 
   return (
     <div className="auth-overlay" onClick={onClose}>
-      <div className="auth-modal" onClick={e => e.stopPropagation()}>
+      <div className="auth-modal" onClick={e => e.stopPropagation()} style={{ maxHeight: '90vh', overflowY: 'auto' }}>
         <button className="auth-close" onClick={onClose}>✕</button>
 
         <div className="auth-tabs">
-          <button className={`auth-tab ${tab === 'login' ? 'active' : ''}`} onClick={() => { setTab('login'); setErreur('') }}>
-            Connexion
-          </button>
-          <button className={`auth-tab ${tab === 'signup' ? 'active' : ''}`} onClick={() => { setTab('signup'); setErreur('') }}>
-            Inscription
-          </button>
+          <button className={`auth-tab ${tab === 'login' ? 'active' : ''}`} onClick={() => changeTab('login')}>Connexion</button>
+          <button className={`auth-tab ${tab === 'influenceur' ? 'active' : ''}`} onClick={() => changeTab('influenceur')}>Influenceur</button>
+          <button className={`auth-tab ${tab === 'restaurateur' ? 'active' : ''}`} onClick={() => changeTab('restaurateur')}>Restaurateur</button>
         </div>
 
-        {tab === 'login' ? (
+        {tab === 'login' && (
           <form className="auth-form" onSubmit={handleConnexion}>
             <p className="auth-subtitle">Content de te revoir 👋</p>
             <label>Adresse e-mail
@@ -166,9 +179,15 @@ function AuthModal({ onClose, onConnexion }: { onClose: () => void; onConnexion:
             <button type="submit" className="btn btn-primary btn-full auth-submit" disabled={loading}>
               {loading ? 'Connexion…' : 'Se connecter'}
             </button>
+            <p className="auth-terms" style={{ textAlign: 'center' }}>
+              Pas encore de compte ?{' '}
+              <button type="button" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--primary)', fontWeight: 600 }} onClick={() => changeTab('influenceur')}>S'inscrire</button>
+            </p>
           </form>
-        ) : (
-          <form className="auth-form" onSubmit={handleInscription}>
+        )}
+
+        {tab === 'influenceur' && (
+          <form className="auth-form" onSubmit={handleInscriptionInfluenceur}>
             <p className="auth-subtitle">Rejoins la communauté — c'est gratuit ✨</p>
             <label>Prénom ou pseudo
               <input type="text" placeholder="Ton nom de créateur" value={form.name} onChange={set('name')} required />
@@ -194,6 +213,38 @@ function AuthModal({ onClose, onConnexion }: { onClose: () => void; onConnexion:
               {loading ? 'Inscription…' : 'Créer mon compte'}
             </button>
             <p className="auth-terms">En t'inscrivant tu acceptes nos <a href="#">CGU</a> et notre <a href="#">politique de confidentialité</a>.</p>
+          </form>
+        )}
+
+        {tab === 'restaurateur' && (
+          <form className="auth-form" onSubmit={handleInscriptionRestaurateur}>
+            <p className="auth-subtitle">Inscris ton restaurant 🍽️</p>
+            <label>Ton prénom et nom
+              <input type="text" placeholder="Jean Dupont" value={resto.nom} onChange={setR('nom')} required />
+            </label>
+            <label>Adresse e-mail
+              <input type="email" placeholder="contact@monrestaurant.fr" value={resto.email} onChange={setR('email')} required />
+            </label>
+            <label>Mot de passe
+              <input type="password" placeholder="8 caractères minimum" value={resto.mot_de_passe} onChange={setR('mot_de_passe')} required />
+            </label>
+            <label>Nom de l'établissement
+              <input type="text" placeholder="Le Petit Bistrot" value={resto.nom_etablissement} onChange={setR('nom_etablissement')} required />
+            </label>
+            <label>Adresse complète
+              <input type="text" placeholder="12 rue de la Paix, 75001 Paris" value={resto.adresse} onChange={setR('adresse')} required />
+            </label>
+            <label>SIRET <span style={{ fontWeight: 400, fontSize: '0.8rem', color: 'var(--text-muted)' }}>(14 chiffres)</span>
+              <input type="text" placeholder="12345678901234" maxLength={14} value={resto.siret} onChange={setR('siret')} required />
+            </label>
+            <label>Téléphone <span style={{ fontWeight: 400, fontSize: '0.8rem', color: 'var(--text-muted)' }}>(optionnel)</span>
+              <input type="tel" placeholder="01 23 45 67 89" value={resto.telephone} onChange={setR('telephone')} />
+            </label>
+            {erreur && <p className="auth-error">{erreur}</p>}
+            <button type="submit" className="btn btn-primary btn-full auth-submit" disabled={loading}>
+              {loading ? 'Envoi…' : 'Envoyer ma demande'}
+            </button>
+            <p className="auth-terms">Ton dossier sera examiné par notre équipe sous 48h.</p>
           </form>
         )}
       </div>
