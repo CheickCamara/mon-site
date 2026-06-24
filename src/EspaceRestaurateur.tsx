@@ -52,7 +52,7 @@ type Candidature = {
   post_publie: boolean
   lien_publication: string | null
   capture_story: string | null
-  influenceurs: { nom: string; email: string; reseau: string; abonnes: number } | null
+  influenceurs: { nom: string; email: string; reseau: string; abonnes: number; pseudo: string | null } | null
   offres: { titre: string; contrepartie: string } | null
 }
 
@@ -397,6 +397,22 @@ export default function EspaceRestaurateur({ utilisateur, onRetour }: Props) {
                           background: 'var(--surface)', border: '1px solid var(--border)',
                           borderRadius: 20, padding: '2px 10px', fontSize: '0.8rem', fontWeight: 600, color: 'var(--primary)',
                         }}>👥 {abonnes} abonnés</span>
+                        {c.influenceurs?.pseudo && (() => {
+                          const reseau = c.influenceurs!.reseau
+                          const pseudo = c.influenceurs!.pseudo!
+                          const url = reseau === 'instagram'
+                            ? `https://www.instagram.com/${pseudo}`
+                            : `https://www.tiktok.com/@${pseudo}`
+                          return (
+                            <a href={url} target="_blank" rel="noreferrer" style={{
+                              background: reseau === 'instagram' ? '#e1306c' : '#000',
+                              color: '#fff', borderRadius: 20, padding: '2px 10px',
+                              fontSize: '0.8rem', fontWeight: 600, textDecoration: 'none',
+                            }}>
+                              {reseau === 'instagram' ? '📸' : '🎵'} @{pseudo} →
+                            </a>
+                          )
+                        })()}
                       </div>
                       <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: 2 }}>
                         Pour : <strong>{c.offres?.titre ?? '—'}</strong> · {CONTREPARTIE_LABEL[c.offres?.contrepartie ?? ''] ?? ''}

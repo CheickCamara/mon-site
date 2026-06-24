@@ -291,6 +291,7 @@ type Profil = {
   statut: string
   date_inscription: string
   collaborations_honorees: number
+  pseudo: string | null
 }
 
 function MonEspace({ utilisateur, onRetour, onNomChange }: { utilisateur: Utilisateur; onRetour: () => void; onNomChange: (nom: string) => void }) {
@@ -298,7 +299,7 @@ function MonEspace({ utilisateur, onRetour, onNomChange }: { utilisateur: Utilis
   const [candidatures, setCandidatures] = useState<MaCandidature[]>([])
   const [loadingCand, setLoadingCand] = useState(true)
   const [profil, setProfil] = useState<Profil | null>(null)
-  const [form, setForm] = useState({ nom: '', reseau: '', abonnes: '', mot_de_passe: '' })
+  const [form, setForm] = useState({ nom: '', reseau: '', abonnes: '', mot_de_passe: '', pseudo: '' })
   const [msg, setMsg] = useState('')
   const [saving, setSaving] = useState(false)
   const [liens, setLiens] = useState<Record<number, string>>({})
@@ -370,7 +371,7 @@ function MonEspace({ utilisateur, onRetour, onNomChange }: { utilisateur: Utilis
     fetch(`${API}/mon-espace/profil`, { headers: { 'Authorization': `Bearer ${token}` } })
       .then(r => r.json()).then(data => {
         setProfil(data)
-        setForm({ nom: data.nom, reseau: data.reseau, abonnes: String(data.abonnes), mot_de_passe: '' })
+        setForm({ nom: data.nom, reseau: data.reseau, abonnes: String(data.abonnes), mot_de_passe: '', pseudo: data.pseudo ?? '' })
       })
   }, [onglet])
 
@@ -378,7 +379,7 @@ function MonEspace({ utilisateur, onRetour, onNomChange }: { utilisateur: Utilis
     e.preventDefault()
     setSaving(true)
     setMsg('')
-    const body: Record<string, string | number> = { nom: form.nom, reseau: form.reseau, abonnes: Number(form.abonnes) }
+    const body: Record<string, string | number | null> = { nom: form.nom, reseau: form.reseau, abonnes: Number(form.abonnes), pseudo: form.pseudo || null }
     if (form.mot_de_passe) body.mot_de_passe = form.mot_de_passe
     const r = await fetch(`${API}/mon-espace/profil`, {
       method: 'PUT',
@@ -610,6 +611,21 @@ function MonEspace({ utilisateur, onRetour, onNomChange }: { utilisateur: Utilis
                   <option value="instagram">Instagram</option>
                   <option value="tiktok">TikTok</option>
                 </select>
+              </label>
+              <label style={{ display: 'flex', flexDirection: 'column', gap: 6, fontWeight: 600, fontSize: '0.9rem' }}>
+                Pseudo {form.reseau === 'instagram' ? 'Instagram' : 'TikTok'}
+                <div style={{ display: 'flex', alignItems: 'center', border: '1px solid var(--border)', borderRadius: 8, overflow: 'hidden', background: 'var(--bg)' }}>
+                  <span style={{ padding: '10px 12px', color: 'var(--text-muted)', borderRight: '1px solid var(--border)', background: 'var(--surface)', fontSize: '1rem' }}>@</span>
+                  <input
+                    placeholder={form.reseau === 'instagram' ? 'ton_pseudo_instagram' : 'ton_pseudo_tiktok'}
+                    value={form.pseudo}
+                    onChange={e => setForm(f => ({ ...f, pseudo: e.target.value.replace(/^@/, '') }))}
+                    style={{ flex: 1, padding: '10px 14px', border: 'none', background: 'transparent', color: 'var(--text)', fontSize: '1rem', outline: 'none' }}
+                  />
+                </div>
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 400 }}>
+                  Permet aux restaurants de consulter ton profil public
+                </span>
               </label>
               <label style={{ display: 'flex', flexDirection: 'column', gap: 6, fontWeight: 600, fontSize: '0.9rem' }}>
                 Nombre d'abonnés
