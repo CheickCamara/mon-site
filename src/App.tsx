@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import './App.css'
 import MapPage from './MapPage'
 import InscriptionRestaurateur from './InscriptionRestaurateur'
+import EspaceRestaurateur from './EspaceRestaurateur'
 
 function useScrollReveal() {
   useEffect(() => {
@@ -523,13 +524,18 @@ export default function App() {
     />
   )
 
-  if (page === 'espace' && utilisateur) return (
-    <MonEspace
-      utilisateur={utilisateur}
-      onRetour={() => setPage('home')}
-      onNomChange={nom => setUtilisateur(u => u ? { ...u, nom } : u)}
-    />
-  )
+  if (page === 'espace' && utilisateur) {
+    if (utilisateur.role === 'restaurateur') return (
+      <EspaceRestaurateur utilisateur={utilisateur} onRetour={() => setPage('home')} />
+    )
+    return (
+      <MonEspace
+        utilisateur={utilisateur}
+        onRetour={() => setPage('home')}
+        onNomChange={nom => setUtilisateur(u => u ? { ...u, nom } : u)}
+      />
+    )
+  }
 
   if (page === 'map') return (
     <div style={{ background: 'var(--bg)', minHeight: '100svh' }}>
