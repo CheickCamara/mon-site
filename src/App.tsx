@@ -914,6 +914,53 @@ function ResetMotDePasse({ token, onRetour }: { token: string; onRetour: () => v
   )
 }
 
+function HowItWorks({ onInscription }: { onInscription: () => void }) {
+  const [onglet, setOnglet] = useState<'influenceur' | 'restaurateur'>('influenceur')
+  const stepsInfluenceur = [
+    { num: '1', icon: '📝', title: 'Inscris-toi gratuitement', desc: 'Crée ton profil en 2 minutes. Renseigne ton réseau, ton nombre d\'abonnés et ton pseudo.' },
+    { num: '2', icon: '🔍', title: 'Trouve une offre compatible', desc: 'Parcours les offres disponibles. Les offres compatibles avec ton audience apparaissent en premier.' },
+    { num: '3', icon: '⚡', title: 'Candidate en 1 clic', desc: 'Envoie ta candidature. Le restaurant consulte ton profil et répond sous 48 h.' },
+    { num: '4', icon: '🍽️', title: 'Profite & publie', desc: 'Tu es accepté ? Viens déguster, publie ton contenu et dépose la preuve sur la plateforme.' },
+  ]
+  const stepsRestaurateur = [
+    { num: '1', icon: '🏪', title: 'Inscris ton restaurant', desc: 'Crée ton compte avec ton SIRET. Ton dossier est validé sous 48 h.' },
+    { num: '2', icon: '🎁', title: 'Publie une offre', desc: 'Définis le menu, la contrepartie (story, post, reel) et la tranche d\'abonnés souhaitée.' },
+    { num: '3', icon: '👤', title: 'Sélectionne un influenceur', desc: 'Reçois des candidatures qualifiées. Consulte les profils et accepte ou refuse.' },
+    { num: '4', icon: '📸', title: 'Récupère la publication', desc: 'L\'influenceur publie et dépose la preuve. La collaboration est honorée et tracée.' },
+  ]
+  const steps = onglet === 'influenceur' ? stepsInfluenceur : stepsRestaurateur
+  return (
+    <section className="lp-how" id="how" style={{ background: 'var(--surface)' }}>
+      <h2 className="section-title">Comment ça marche</h2>
+      <div style={{ display: 'flex', justifyContent: 'center', gap: 12, marginBottom: 40 }}>
+        <button onClick={() => setOnglet('influenceur')} style={{ padding: '10px 24px', borderRadius: 100, border: 'none', fontWeight: 700, fontSize: '0.9rem', cursor: 'pointer', fontFamily: 'inherit', background: onglet === 'influenceur' ? 'var(--primary)' : 'var(--border)', color: onglet === 'influenceur' ? '#fff' : 'var(--text)', transition: 'all 0.2s' }}>
+          🎬 Je suis influenceur
+        </button>
+        <button onClick={() => setOnglet('restaurateur')} style={{ padding: '10px 24px', borderRadius: 100, border: 'none', fontWeight: 700, fontSize: '0.9rem', cursor: 'pointer', fontFamily: 'inherit', background: onglet === 'restaurateur' ? '#f59e0b' : 'var(--border)', color: onglet === 'restaurateur' ? '#fff' : 'var(--text)', transition: 'all 0.2s' }}>
+          🍽️ Je suis restaurateur
+        </button>
+      </div>
+      <div className="steps">
+        {steps.map((s, i) => (
+          <>
+            <div className="step" key={s.num}>
+              <div className="step-num">{s.icon}</div>
+              <h3>{s.title}</h3>
+              <p>{s.desc}</p>
+            </div>
+            {i < steps.length - 1 && <div className="step-connector" key={`c${i}`}>→</div>}
+          </>
+        ))}
+      </div>
+      <div style={{ textAlign: 'center', marginTop: 36 }}>
+        <button className="btn btn-primary" onClick={onInscription} style={{ fontSize: '1rem', padding: '14px 32px' }}>
+          {onglet === 'influenceur' ? 'Je m\'inscris gratuitement →' : 'Inscrire mon restaurant →'}
+        </button>
+      </div>
+    </section>
+  )
+}
+
 export default function App() {
   const { theme, toggle } = useTheme()
   const [page, setPage] = useState<'home' | 'map' | 'espace' | 'restaurateur' | 'reset' | 'profil-restaurant'>('home')
@@ -1225,28 +1272,7 @@ export default function App() {
       </section>
 
       {/* COMMENT ÇA MARCHE */}
-      <section className="lp-how" id="how" style={{ background: 'var(--surface)' }}>
-        <h2 className="section-title">Comment ça marche</h2>
-        <div className="steps">
-          <div className="step reveal reveal-delay-1">
-            <div className="step-num">1</div>
-            <h3>Crée ton profil</h3>
-            <p>Influenceur ou restaurateur — inscription en 2 minutes. Compte vérifié, profil prêt à l'emploi.</p>
-          </div>
-          <div className="step-connector">→</div>
-          <div className="step reveal reveal-delay-2">
-            <div className="step-num">2</div>
-            <h3>Candidate ou publie</h3>
-            <p>L'influenceur trouve une offre près de chez lui et candidate. Le restaurateur reçoit des candidatures filtrées et qualifiées.</p>
-          </div>
-          <div className="step-connector">→</div>
-          <div className="step reveal reveal-delay-3">
-            <div className="step-num">3</div>
-            <h3>Dégustation & publication</h3>
-            <p>Le repas a lieu. L'influenceur publie son contenu et dépose la preuve sur la plateforme. La collaboration est honorée.</p>
-          </div>
-        </div>
-      </section>
+      <HowItWorks onInscription={() => setAuthOpen(true)} />
 
       {/* OFFRES */}
       <section className="lp-restaurants" id="restaurants">
@@ -1260,8 +1286,24 @@ export default function App() {
           <p className="geo-error">Aucune offre disponible pour le moment. Reviens bientôt !</p>
         )}
         <div className="restaurant-grid">
-          {offres.map((o) => (
-            <div className="restaurant-card" key={o.id}>
+          {[...offres].sort((a, b) => {
+            const abonnes = utilisateur?.abonnes ?? 0
+            const aCompat = abonnes >= a.tranche_min && (a.tranche_max == null || abonnes <= a.tranche_max)
+            const bCompat = abonnes >= b.tranche_min && (b.tranche_max == null || abonnes <= b.tranche_max)
+            return Number(bCompat) - Number(aCompat)
+          }).map((o) => {
+            const abonnes = utilisateur?.abonnes ?? 0
+            const compatible = utilisateur?.role === 'influenceur' && abonnes >= o.tranche_min && (o.tranche_max == null || abonnes <= o.tranche_max)
+            return (
+            <div className="restaurant-card" key={o.id} style={{ position: 'relative' }}>
+              {compatible && (
+                <div style={{
+                  position: 'absolute', top: 10, left: 10, zIndex: 2,
+                  background: '#22c55e', color: '#fff',
+                  fontSize: '0.72rem', fontWeight: 700, padding: '3px 10px',
+                  borderRadius: 20, letterSpacing: '0.4px',
+                }}>✓ Compatible</div>
+              )}
               <div className="card-img-wrap">
                 <img
                   src={o.restaurants?.image || getPhoto(o.description || '')}
@@ -1290,7 +1332,13 @@ export default function App() {
                     👥 {o.tranche_min.toLocaleString('fr-FR')}
                     {o.tranche_max ? ` – ${o.tranche_max.toLocaleString('fr-FR')}` : '+'} abonnés
                   </span>
-                  <span className="card-chip">🪑 {o.places_restantes} place{o.places_restantes > 1 ? 's' : ''}</span>
+                  {o.places_restantes <= 2 ? (
+                    <span className="card-chip" style={{ background: '#fef2f2', color: '#dc2626', border: '1px solid #fca5a5', fontWeight: 700 }}>
+                      🔥 {o.places_restantes === 1 ? 'Dernière place !' : '2 places restantes'}
+                    </span>
+                  ) : (
+                    <span className="card-chip">🪑 {o.places_restantes} place{o.places_restantes > 1 ? 's' : ''}</span>
+                  )}
                 </div>
                 {o.conditions && <p className="card-desc" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>ℹ️ {o.conditions}</p>}
                 {(() => {
@@ -1321,7 +1369,7 @@ export default function App() {
                 })()}
               </div>
             </div>
-          ))}
+          )})}
         </div>
       </section>
 
