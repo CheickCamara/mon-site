@@ -405,15 +405,25 @@ export default function EspaceRestaurateur({ utilisateur, onRetour, onVoirProfil
                       <input type="file" accept="image/*" style={{ display: 'none' }} onChange={async e => {
                         const file = e.target.files?.[0]
                         if (!file) return
-                        const fd = new FormData(); fd.append('photo', file)
-                        const r = await fetch(`${API}/restaurateur/mon-restaurant/photo`, { method: 'POST', headers, body: fd })
-                        if (!r.ok) { console.error('Upload photo erreur', r.status, r.url); return }
-                        const d = await r.json()
-                        if (d.url) setRestaurant(prev => prev ? { ...prev, image: d.url } : prev)
+                        if (file.size > 5 * 1024 * 1024) { setRestoError('Image trop lourde — 5 Mo maximum.'); return }
+                        setRestoError('')
+                        setRestoLoading(true)
+                        try {
+                          const fd = new FormData(); fd.append('photo', file)
+                          const r = await fetch(`${API}/restaurateur/mon-restaurant/photo`, { method: 'POST', headers, body: fd })
+                          const d = await r.json()
+                          if (!r.ok) { setRestoError(d.error || 'Erreur lors de l\'upload.'); return }
+                          setRestaurant(prev => prev ? { ...prev, image: d.url } : prev)
+                          setRestoSuccess(true); setTimeout(() => setRestoSuccess(false), 3000)
+                        } catch { setRestoError('Erreur réseau, réessaie.') }
+                        finally { setRestoLoading(false) }
                       }} />
                     </label>
-                    {restaurant.image && <img src={restaurant.image} alt="photo" style={{ width: 56, height: 56, borderRadius: 8, objectFit: 'cover', border: '1px solid var(--border)' }} />}
+                    {restoLoading && <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>Upload en cours…</span>}
+                    {restaurant.image && !restoLoading && <img src={restaurant.image} alt="photo" style={{ width: 56, height: 56, borderRadius: 8, objectFit: 'cover', border: '1px solid var(--border)' }} />}
                   </div>
+                  {restoError && !editingResto && <p style={{ color: '#ef4444', fontSize: '0.85rem', marginTop: 8 }}>❌ {restoError}</p>}
+                  {restoSuccess && !editingResto && <p style={{ color: '#22c55e', fontSize: '0.85rem', marginTop: 8 }}>✅ Photo mise à jour !</p>}
                 </div>
 
                 {/* Formulaire d'édition */}
