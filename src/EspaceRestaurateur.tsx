@@ -80,9 +80,10 @@ type Candidature = {
 type Props = {
   utilisateur: { id: number; nom: string; email: string; role: string }
   onRetour: () => void
+  onVoirProfilInfluenceur?: (id: number) => void
 }
 
-export default function EspaceRestaurateur({ utilisateur, onRetour }: Props) {
+export default function EspaceRestaurateur({ utilisateur, onRetour, onVoirProfilInfluenceur }: Props) {
   const [onglet, setOnglet] = useState<'restaurant' | 'offres' | 'candidatures'>('restaurant')
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null)
   const [offres, setOffres] = useState<Offre[]>([])
@@ -700,6 +701,11 @@ export default function EspaceRestaurateur({ utilisateur, onRetour }: Props) {
                                 ({notesInfluenceurs[c.influenceur_id].total} avis)
                               </span>
                             </p>
+                          )}
+                          {onVoirProfilInfluenceur && (
+                            <button onClick={() => onVoirProfilInfluenceur(c.influenceur_id)} style={{ background: 'none', border: 'none', color: 'var(--primary)', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', padding: 0, textDecoration: 'underline', marginTop: 2 }}>
+                              Voir le profil complet →
+                            </button>
                           )}
                         </div>
                       </div>

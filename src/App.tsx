@@ -5,6 +5,7 @@ import InscriptionRestaurateur from './InscriptionRestaurateur'
 import EspaceRestaurateur from './EspaceRestaurateur'
 import Messagerie from './Messagerie'
 import ProfilRestaurant from './ProfilRestaurant'
+import ProfilInfluenceur from './ProfilInfluenceur'
 
 function useScrollReveal() {
   useEffect(() => {
@@ -963,8 +964,9 @@ function HowItWorks({ onInscription }: { onInscription: () => void }) {
 
 export default function App() {
   const { theme, toggle } = useTheme()
-  const [page, setPage] = useState<'home' | 'map' | 'espace' | 'restaurateur' | 'reset' | 'profil-restaurant'>('home')
+  const [page, setPage] = useState<'home' | 'map' | 'espace' | 'restaurateur' | 'reset' | 'profil-restaurant' | 'profil-influenceur'>('home')
   const [profilRestoId, setProfilRestoId] = useState<number | null>(null)
+  const [profilInfluenceurId, setProfilInfluenceurId] = useState<number | null>(null)
   const [resetToken, setResetToken] = useState('')
   const [authOpen, setAuthOpen] = useState(false)
   const [utilisateur, setUtilisateur] = useState<Utilisateur | null>(() => {
@@ -1030,6 +1032,7 @@ export default function App() {
   const [offres, setOffres] = useState<Offre[]>([])
   const [fetchError, setFetchError] = useState(false)
   const [fetchLoading, setFetchLoading] = useState(true)
+  const [filtreCompatible, setFiltreCompatible] = useState(false)
 
   useEffect(() => {
     fetch('https://mon-api-rqm7.onrender.com/offres')
@@ -1043,6 +1046,14 @@ export default function App() {
 
   if (page === 'reset') return (
     <ResetMotDePasse token={resetToken} onRetour={() => { setPage('home'); window.history.replaceState({}, '', '/') }} />
+  )
+
+  if (page === 'profil-influenceur' && profilInfluenceurId) return (
+    <ProfilInfluenceur
+      influenceurId={profilInfluenceurId}
+      onRetour={() => setPage('espace')}
+      token={localStorage.getItem('token')}
+    />
   )
 
   if (page === 'profil-restaurant' && profilRestoId) return (
@@ -1063,7 +1074,7 @@ export default function App() {
 
   if (page === 'espace' && utilisateur) {
     if (utilisateur.role === 'restaurateur') return (
-      <EspaceRestaurateur utilisateur={utilisateur} onRetour={() => setPage('home')} />
+      <EspaceRestaurateur utilisateur={utilisateur} onRetour={() => setPage('home')} onVoirProfilInfluenceur={(id) => { setProfilInfluenceurId(id); setPage('profil-influenceur') }} />
     )
     return (
       <MonEspace
@@ -1280,13 +1291,33 @@ export default function App() {
           <h2 className="section-title">Offres disponibles</h2>
           <p className="section-sub">Candidate à un repas gratuit en échange d'une publication</p>
         </div>
+        {utilisateur?.role === 'influenceur' && (
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
+            <button
+              onClick={() => setFiltreCompatible(f => !f)}
+              style={{
+                padding: '9px 22px', borderRadius: 100, border: `2px solid ${filtreCompatible ? '#22c55e' : 'var(--border)'}`,
+                background: filtreCompatible ? '#f0fdf4' : 'var(--surface)',
+                color: filtreCompatible ? '#16a34a' : 'var(--text)',
+                fontWeight: 700, fontSize: '0.88rem', cursor: 'pointer', fontFamily: 'inherit',
+                transition: 'all 0.2s',
+              }}
+            >
+              {filtreCompatible ? '✓ Offres compatibles uniquement' : '🎯 Voir mes offres compatibles'}
+            </button>
+          </div>
+        )}
         {fetchLoading && <p className="geo-error">Chargement des offres…</p>}
         {fetchError && <p className="geo-error">Impossible de charger les offres.</p>}
         {!fetchLoading && !fetchError && offres.length === 0 && (
           <p className="geo-error">Aucune offre disponible pour le moment. Reviens bientôt !</p>
         )}
         <div className="restaurant-grid">
-          {[...offres].sort((a, b) => {
+          {[...offres].filter(o => {
+            if (!filtreCompatible || !utilisateur || utilisateur.role !== 'influenceur') return true
+            const ab = utilisateur.abonnes ?? 0
+            return ab >= o.tranche_min && (o.tranche_max == null || ab <= o.tranche_max)
+          }).sort((a, b) => {
             const abonnes = utilisateur?.abonnes ?? 0
             const aCompat = abonnes >= a.tranche_min && (a.tranche_max == null || abonnes <= a.tranche_max)
             const bCompat = abonnes >= b.tranche_min && (b.tranche_max == null || abonnes <= b.tranche_max)
