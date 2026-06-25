@@ -128,6 +128,14 @@ export default function EspaceRestaurateur({ utilisateur, onRetour, onVoirProfil
   }, [])
 
   useEffect(() => {
+    if (onglet !== 'stats' || stats || statsErreur) return
+    fetch(`${API}/restaurateur/stats`, { headers })
+      .then(r => r.json())
+      .then(d => { if (d.offres) setStats(d); else setStatsErreur(true) })
+      .catch(() => setStatsErreur(true))
+  }, [onglet])
+
+  useEffect(() => {
     Promise.all([
       fetch(`${API}/restaurateur/mon-restaurant`, { headers }).then(r => r.json()),
       fetch(`${API}/restaurateur/mes-offres`, { headers }).then(r => r.json()),
@@ -332,7 +340,7 @@ export default function EspaceRestaurateur({ utilisateur, onRetour, onVoirProfil
             { key: 'candidatures', label: `📋 Candidatures`, badge: notifRestau },
             { key: 'stats',      label: '📊 Stats' },
           ] as const).map(o => (
-            <button key={o.key} onClick={() => { setOnglet(o.key); if (o.key === 'stats' && !stats) fetch(`${API}/restaurateur/stats`, { headers }).then(r => r.json()).then(d => { if (d.offres) setStats(d); else setStatsErreur(true) }).catch(() => setStatsErreur(true)) }} style={{
+            <button key={o.key} onClick={() => setOnglet(o.key)} style={{
               background: 'none', border: 'none', cursor: 'pointer',
               padding: '8px 16px', fontWeight: 600, fontSize: '0.95rem',
               color: onglet === o.key ? 'var(--primary)' : 'var(--text-muted)',
