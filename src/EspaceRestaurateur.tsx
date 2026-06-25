@@ -393,12 +393,26 @@ export default function EspaceRestaurateur({ utilisateur, onRetour, onVoirProfil
                     </p>
                   )}
 
-                  <button onClick={ouvrirEditionResto} style={{
-                    marginTop: 16, padding: '8px 18px', borderRadius: 8, border: 'none', cursor: 'pointer',
-                    background: 'var(--primary)', color: '#fff', fontWeight: 700, fontSize: '0.85rem',
-                  }}>
-                    ✏️ Modifier les informations
-                  </button>
+                  <div style={{ display: 'flex', gap: 10, marginTop: 16, flexWrap: 'wrap', alignItems: 'center' }}>
+                    <button onClick={ouvrirEditionResto} style={{
+                      padding: '8px 18px', borderRadius: 8, border: 'none', cursor: 'pointer',
+                      background: 'var(--primary)', color: '#fff', fontWeight: 700, fontSize: '0.85rem',
+                    }}>
+                      ✏️ Modifier les informations
+                    </button>
+                    <label style={{ padding: '8px 18px', borderRadius: 8, border: '1.5px solid var(--border)', cursor: 'pointer', fontWeight: 700, fontSize: '0.85rem', color: 'var(--text)' }}>
+                      🖼️ {restaurant.image ? 'Changer la photo' : 'Ajouter une photo'}
+                      <input type="file" accept="image/*" style={{ display: 'none' }} onChange={async e => {
+                        const file = e.target.files?.[0]
+                        if (!file) return
+                        const fd = new FormData(); fd.append('photo', file)
+                        const r = await fetch(`${API}/restaurateur/mon-restaurant/photo`, { method: 'POST', headers, body: fd })
+                        const d = await r.json()
+                        if (d.url) setRestaurant(prev => prev ? { ...prev, image: d.url } : prev)
+                      }} />
+                    </label>
+                    {restaurant.image && <img src={restaurant.image} alt="photo" style={{ width: 56, height: 56, borderRadius: 8, objectFit: 'cover', border: '1px solid var(--border)' }} />}
+                  </div>
                 </div>
 
                 {/* Formulaire d'édition */}
