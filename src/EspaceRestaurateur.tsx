@@ -407,6 +407,7 @@ export default function EspaceRestaurateur({ utilisateur, onRetour, onVoirProfil
                         if (!file) return
                         const fd = new FormData(); fd.append('photo', file)
                         const r = await fetch(`${API}/restaurateur/mon-restaurant/photo`, { method: 'POST', headers, body: fd })
+                        if (!r.ok) { console.error('Upload photo erreur', r.status, r.url); return }
                         const d = await r.json()
                         if (d.url) setRestaurant(prev => prev ? { ...prev, image: d.url } : prev)
                       }} />
