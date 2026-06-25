@@ -10,6 +10,7 @@ const RESEAU_LABEL: Record<string, string> = {
 type Collab = {
   id: number
   lien_publication: string | null
+  capture_story: string | null
   date_candidature: string
   offres: { titre: string; restaurants: { nom: string } } | null
 }
@@ -112,8 +113,13 @@ export default function ProfilInfluenceur({ influenceurId, onRetour, token }: Pr
                   style={{ fontSize: '0.8rem', color: 'var(--primary)', fontWeight: 600, textDecoration: 'none' }}>
                   Voir la publication →
                 </a>
+              ) : c.capture_story ? (
+                <a href={c.capture_story} target="_blank" rel="noopener noreferrer"
+                  style={{ fontSize: '0.8rem', color: 'var(--primary)', fontWeight: 600, textDecoration: 'none' }}>
+                  Voir la capture →
+                </a>
               ) : (
-                <span style={{ fontSize: '0.8rem', color: 'var(--text)' }}>Lien non disponible</span>
+                <span style={{ fontSize: '0.8rem', color: 'var(--text)' }}>Preuve non disponible</span>
               )}
             </div>
           ))}
