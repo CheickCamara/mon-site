@@ -307,6 +307,7 @@ export default function EspaceRestaurateur({ utilisateur, onRetour, onVoirProfil
         body: JSON.stringify({ statut }),
       })
       setCandidatures(prev => prev.map(c => c.id === id ? { ...c, statut } : c))
+      setStats(null)
     } finally {
       setActionLoading(null)
     }
