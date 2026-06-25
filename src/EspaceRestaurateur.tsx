@@ -926,8 +926,8 @@ export default function EspaceRestaurateur({ utilisateur, onRetour, onVoirProfil
                             <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-h)' }}>{o.titre}</span>
                             <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{utilisees}/{total} places</span>
                           </div>
-                          <div style={{ background: 'var(--border)', borderRadius: 100, height: 8, overflow: 'hidden' }}>
-                            <div style={{ background: pct >= 80 ? '#ef4444' : 'var(--primary)', width: `${pct}%`, height: '100%', borderRadius: 100, transition: 'width 0.4s' }} />
+                          <div style={{ background: 'var(--border)', borderRadius: 100, height: 8, position: 'relative' }}>
+                            {pct > 0 && <div style={{ background: pct >= 80 ? '#ef4444' : 'var(--primary)', width: `${pct}%`, height: 8, borderRadius: 100, position: 'absolute', top: 0, left: 0 }} />}
                           </div>
                         </div>
                       )
