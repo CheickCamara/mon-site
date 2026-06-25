@@ -982,8 +982,14 @@ export default function App() {
   }, [])
 
   useEffect(() => {
-    if (!utilisateur || utilisateur.role !== 'influenceur') return
+    if (!utilisateur) return
     const token = localStorage.getItem('token')
+    if (utilisateur.role === 'restaurateur') {
+      fetch(`${API}/restaurateur/notifications`, { headers: { 'Authorization': `Bearer ${token}` } })
+        .then(r => r.json()).then(d => setNotifCount(d.count ?? 0)).catch(() => {})
+      return
+    }
+    if (utilisateur.role !== 'influenceur') return
     const depuis = localStorage.getItem('derniere_visite_espace') ?? ''
     fetch(`${API}/mon-espace/notifications${depuis ? `?depuis=${encodeURIComponent(depuis)}` : ''}`, {
       headers: { 'Authorization': `Bearer ${token}` }

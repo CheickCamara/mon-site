@@ -84,7 +84,7 @@ type Props = {
 }
 
 export default function EspaceRestaurateur({ utilisateur, onRetour, onVoirProfilInfluenceur }: Props) {
-  const [onglet, setOnglet] = useState<'restaurant' | 'offres' | 'candidatures'>('restaurant')
+  const [onglet, setOnglet] = useState<'restaurant' | 'offres' | 'candidatures' | 'stats'>('restaurant')
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null)
   const [offres, setOffres] = useState<Offre[]>([])
   const [candidatures, setCandidatures] = useState<Candidature[]>([])
@@ -116,8 +116,15 @@ export default function EspaceRestaurateur({ utilisateur, onRetour, onVoirProfil
   const [restoLoading, setRestoLoading] = useState(false)
   const [restoSuccess, setRestoSuccess] = useState(false)
   const [restoError, setRestoError] = useState('')
+  const [stats, setStats] = useState<{ total_candidatures: number; en_attente: number; valides: number; honorees: number; publications: number; taux_conversion: number; total_places: number; places_utilisees: number; recentes_7j: number; offres: { titre: string; nombre_places: number; places_restantes: number; statut: string }[] } | null>(null)
+  const [notifRestau, setNotifRestau] = useState(0)
   const token = localStorage.getItem('token')
   const headers = { 'Authorization': `Bearer ${token}` }
+
+  useEffect(() => {
+    fetch(`${API}/restaurateur/notifications`, { headers })
+      .then(r => r.json()).then(d => setNotifRestau(d.count ?? 0)).catch(() => {})
+  }, [])
 
   useEffect(() => {
     Promise.all([
@@ -317,20 +324,26 @@ export default function EspaceRestaurateur({ utilisateur, onRetour, onVoirProfil
         <p style={{ color: 'var(--text-muted)', marginBottom: 32 }}>Espace restaurateur</p>
 
         {/* Onglets */}
-        <div style={{ display: 'flex', gap: 8, borderBottom: '2px solid var(--border)', marginBottom: 32 }}>
+        <div style={{ display: 'flex', gap: 8, borderBottom: '2px solid var(--border)', marginBottom: 32, flexWrap: 'wrap' }}>
           {([
             { key: 'restaurant', label: '🏠 Mon restaurant' },
             { key: 'offres',     label: `🎁 Mes offres (${offres.length})` },
-            { key: 'candidatures', label: `📋 Candidatures (${candidatures.length})` },
+            { key: 'candidatures', label: `📋 Candidatures`, badge: notifRestau },
+            { key: 'stats',      label: '📊 Stats' },
           ] as const).map(o => (
-            <button key={o.key} onClick={() => setOnglet(o.key)} style={{
+            <button key={o.key} onClick={() => { setOnglet(o.key); if (o.key === 'stats' && !stats) fetch(`${API}/restaurateur/stats`, { headers }).then(r => r.json()).then(setStats).catch(() => {}) }} style={{
               background: 'none', border: 'none', cursor: 'pointer',
               padding: '8px 16px', fontWeight: 600, fontSize: '0.95rem',
               color: onglet === o.key ? 'var(--primary)' : 'var(--text-muted)',
               borderBottom: onglet === o.key ? '2px solid var(--primary)' : '2px solid transparent',
-              marginBottom: -2,
+              marginBottom: -2, display: 'flex', alignItems: 'center', gap: 6,
             }}>
-              {o.label}
+              {o.key === 'candidatures' ? `📋 Candidatures (${candidatures.length})` : o.label}
+              {'badge' in o && o.badge > 0 && (
+                <span style={{ background: '#ef4444', color: '#fff', borderRadius: '50%', width: 18, height: 18, fontSize: '0.7rem', fontWeight: 800, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {o.badge > 9 ? '9+' : o.badge}
+                </span>
+              )}
             </button>
           ))}
         </div>
@@ -859,6 +872,58 @@ export default function EspaceRestaurateur({ utilisateur, onRetour, onVoirProfil
                 </div>
               )
             })}
+          </div>
+        )}
+      </div>
+
+        {/* Stats */}
+        {!loading && onglet === 'stats' && (
+          <div>
+            {!stats ? (
+              <p style={{ color: 'var(--text-muted)' }}>Chargement des statistiques…</p>
+            ) : (
+              <>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 14, marginBottom: 28 }}>
+                  {[
+                    { label: 'Candidatures reçues', val: stats.total_candidatures, icon: '📋' },
+                    { label: 'En attente', val: stats.en_attente, icon: '⏳' },
+                    { label: 'Collaborations honorées', val: stats.honorees, icon: '🏆' },
+                    { label: 'Publications soumises', val: stats.publications, icon: '📸' },
+                    { label: 'Taux de conversion', val: `${stats.taux_conversion}%`, icon: '📈' },
+                    { label: 'Nouvelles (7 jours)', val: stats.recentes_7j, icon: '🆕' },
+                  ].map(s => (
+                    <div key={s.label} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: '18px 16px', textAlign: 'center' }}>
+                      <div style={{ fontSize: '1.6rem', marginBottom: 6 }}>{s.icon}</div>
+                      <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--text-h)' }}>{s.val}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 4 }}>{s.label}</div>
+                    </div>
+                  ))}
+                </div>
+
+                <h3 style={{ fontWeight: 700, fontSize: '1rem', marginBottom: 12, color: 'var(--text-h)' }}>Offres — places</h3>
+                {stats.offres.length === 0 ? (
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Aucune offre créée.</p>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    {stats.offres.map((o, i) => {
+                      const utilisees = o.nombre_places - o.places_restantes
+                      const pct = o.nombre_places > 0 ? Math.round((utilisees / o.nombre_places) * 100) : 0
+                      return (
+                        <div key={i} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, padding: '14px 16px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                            <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-h)' }}>{o.titre}</span>
+                            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{utilisees}/{o.nombre_places} places</span>
+                          </div>
+                          <div style={{ background: 'var(--border)', borderRadius: 100, height: 8, overflow: 'hidden' }}>
+                            <div style={{ background: pct >= 80 ? '#ef4444' : 'var(--primary)', width: `${pct}%`, height: '100%', borderRadius: 100, transition: 'width 0.4s' }} />
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </>
+            )}
           </div>
         )}
       </div>
