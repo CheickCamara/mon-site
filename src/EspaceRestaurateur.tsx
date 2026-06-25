@@ -905,13 +905,15 @@ export default function EspaceRestaurateur({ utilisateur, onRetour, onVoirProfil
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                     {stats.offres.map((o, i) => {
-                      const utilisees = o.nombre_places - o.places_restantes
-                      const pct = o.nombre_places > 0 ? Math.round((utilisees / o.nombre_places) * 100) : 0
+                      const total = Number(o.nombre_places) || 0
+                      const restantes = Number(o.places_restantes) || 0
+                      const utilisees = total - restantes
+                      const pct = total > 0 ? Math.round((utilisees / total) * 100) : 0
                       return (
                         <div key={i} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, padding: '14px 16px' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                             <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-h)' }}>{o.titre}</span>
-                            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{utilisees}/{o.nombre_places} places</span>
+                            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{utilisees}/{total} places</span>
                           </div>
                           <div style={{ background: 'var(--border)', borderRadius: 100, height: 8, overflow: 'hidden' }}>
                             <div style={{ background: pct >= 80 ? '#ef4444' : 'var(--primary)', width: `${pct}%`, height: '100%', borderRadius: 100, transition: 'width 0.4s' }} />
