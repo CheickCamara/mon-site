@@ -405,17 +405,31 @@ export default function EspaceRestaurateur({ utilisateur, onRetour, onVoirProfil
                       <input type="file" accept="image/*" style={{ display: 'none' }} onChange={async e => {
                         const file = e.target.files?.[0]
                         if (!file) return
-                        if (file.size > 5 * 1024 * 1024) { setRestoError('Image trop lourde — 5 Mo maximum.'); return }
-                        setRestoError('')
-                        setRestoLoading(true)
+                        setRestoError(''); setRestoLoading(true)
                         try {
-                          const fd = new FormData(); fd.append('photo', file)
+                          // Compression canvas → max 1200px, qualité 0.82
+                          const compressed = await new Promise<Blob>((resolve, reject) => {
+                            const img = new Image()
+                            img.onload = () => {
+                              const MAX = 1200
+                              const ratio = Math.min(1, MAX / Math.max(img.width, img.height))
+                              const canvas = document.createElement('canvas')
+                              canvas.width = Math.round(img.width * ratio)
+                              canvas.height = Math.round(img.height * ratio)
+                              canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height)
+                              canvas.toBlob(b => b ? resolve(b) : reject(new Error('Compression échouée')), 'image/jpeg', 0.82)
+                            }
+                            img.onerror = reject
+                            img.src = URL.createObjectURL(file)
+                          })
+                          const fd = new FormData()
+                          fd.append('photo', compressed, 'photo.jpg')
                           const r = await fetch(`${API}/restaurateur/mon-restaurant/photo`, { method: 'POST', headers, body: fd })
                           const d = await r.json()
                           if (!r.ok) { setRestoError(d.error || 'Erreur lors de l\'upload.'); return }
                           setRestaurant(prev => prev ? { ...prev, image: d.url } : prev)
                           setRestoSuccess(true); setTimeout(() => setRestoSuccess(false), 3000)
-                        } catch { setRestoError('Erreur réseau, réessaie.') }
+                        } catch { setRestoError('Erreur lors de la compression, réessaie.') }
                         finally { setRestoLoading(false) }
                       }} />
                     </label>
