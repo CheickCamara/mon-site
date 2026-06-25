@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
+import { BASE } from './config'
 
-const API = 'https://mon-api-rqm7.onrender.com'
+const API = BASE
 
 const RESEAU_LABEL: Record<string, string> = {
   instagram: '📸 Instagram',

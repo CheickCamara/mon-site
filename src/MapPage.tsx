@@ -5,6 +5,7 @@ import 'leaflet.markercluster/dist/MarkerCluster.css'
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css'
 import 'leaflet.markercluster'
 import './MapPage.css'
+import { BASE } from './config'
 
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png'
 import markerIcon from 'leaflet/dist/images/marker-icon.png'
@@ -38,7 +39,7 @@ function getPhoto(description: string): string {
   return PHOTOS_PAR_CUISINE['default']
 }
 
-const API = 'https://mon-api-rqm7.onrender.com'
+const API = BASE
 
 type Restaurant = {
   id: number
@@ -101,7 +102,7 @@ export default function MapPage({ utilisateur, token }: Props) {
   const [avisResto, setAvisResto] = useState<{ moyenne: string | null; total: number } | null>(null)
 
   useEffect(() => {
-    fetch('https://mon-api-rqm7.onrender.com/restaurants')
+    fetch(`${API}/restaurants`)
       .then(res => res.json())
       .then(data => setRestaurants(data))
   }, [])

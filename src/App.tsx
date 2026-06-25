@@ -6,6 +6,7 @@ import EspaceRestaurateur from './EspaceRestaurateur'
 import Messagerie from './Messagerie'
 import ProfilRestaurant from './ProfilRestaurant'
 import ProfilInfluenceur from './ProfilInfluenceur'
+import { BASE } from './config'
 
 function useScrollReveal() {
   useEffect(() => {
@@ -18,6 +19,10 @@ function useScrollReveal() {
     return () => observer.disconnect()
   }, [])
 }
+
+
+console.log('Backend URL:', import.meta.env.VITE_URL_BACKEND)
+console.log('coucou Cheick',)
 
 function useTheme() {
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
@@ -71,7 +76,7 @@ function getPhoto(description: string): string {
 }
 
 
-const API = 'https://mon-api-rqm7.onrender.com'
+const API = BASE
 
 type Utilisateur = {
   id: number
@@ -1041,7 +1046,7 @@ export default function App() {
   const [filtreCompatible, setFiltreCompatible] = useState(false)
 
   useEffect(() => {
-    fetch('https://mon-api-rqm7.onrender.com/offres')
+    fetch(`${API}/offres`)
       .then(r => r.json())
       .then(offresData => {
         setOffres(offresData)

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
+import { BASE } from './config'
 
-const API = 'https://mon-api-rqm7.onrender.com'
+const API = BASE
 
 type Message = {
   id: number
