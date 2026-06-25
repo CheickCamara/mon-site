@@ -874,7 +874,6 @@ export default function EspaceRestaurateur({ utilisateur, onRetour, onVoirProfil
             })}
           </div>
         )}
-      </div>
 
         {/* Stats */}
         {!loading && onglet === 'stats' && (
