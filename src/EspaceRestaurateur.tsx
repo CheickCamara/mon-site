@@ -117,6 +117,7 @@ export default function EspaceRestaurateur({ utilisateur, onRetour, onVoirProfil
   const [restoSuccess, setRestoSuccess] = useState(false)
   const [restoError, setRestoError] = useState('')
   const [stats, setStats] = useState<{ total_candidatures: number; en_attente: number; valides: number; honorees: number; publications: number; taux_conversion: number; total_places: number; places_utilisees: number; recentes_7j: number; offres: { titre: string; nombre_places: number; places_restantes: number; statut: string }[] } | null>(null)
+  const [statsErreur, setStatsErreur] = useState(false)
   const [notifRestau, setNotifRestau] = useState(0)
   const token = localStorage.getItem('token')
   const headers = { 'Authorization': `Bearer ${token}` }
@@ -331,7 +332,7 @@ export default function EspaceRestaurateur({ utilisateur, onRetour, onVoirProfil
             { key: 'candidatures', label: `📋 Candidatures`, badge: notifRestau },
             { key: 'stats',      label: '📊 Stats' },
           ] as const).map(o => (
-            <button key={o.key} onClick={() => { setOnglet(o.key); if (o.key === 'stats' && !stats) fetch(`${API}/restaurateur/stats`, { headers }).then(r => r.json()).then(setStats).catch(() => {}) }} style={{
+            <button key={o.key} onClick={() => { setOnglet(o.key); if (o.key === 'stats' && !stats) fetch(`${API}/restaurateur/stats`, { headers }).then(r => r.json()).then(d => { if (d.offres) setStats(d); else setStatsErreur(true) }).catch(() => setStatsErreur(true)) }} style={{
               background: 'none', border: 'none', cursor: 'pointer',
               padding: '8px 16px', fontWeight: 600, fontSize: '0.95rem',
               color: onglet === o.key ? 'var(--primary)' : 'var(--text-muted)',
@@ -878,7 +879,9 @@ export default function EspaceRestaurateur({ utilisateur, onRetour, onVoirProfil
         {/* Stats */}
         {!loading && onglet === 'stats' && (
           <div>
-            {!stats ? (
+            {statsErreur ? (
+              <p style={{ color: 'var(--error, #ef4444)' }}>Impossible de charger les statistiques. Réessaie dans quelques secondes.</p>
+            ) : !stats ? (
               <p style={{ color: 'var(--text-muted)' }}>Chargement des statistiques…</p>
             ) : (
               <>
