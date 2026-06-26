@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import Messagerie from './Messagerie'
 
-const API = 'https://mon-api-rqm7.onrender.com'
+import { BASE } from './config'
+const API = BASE
 
 function tempsEcoule(dateIso: string): string {
   const diff = Date.now() - new Date(dateIso).getTime()
@@ -119,6 +120,8 @@ export default function EspaceRestaurateur({ utilisateur, onRetour, onVoirProfil
   const [stats, setStats] = useState<{ total_candidatures: number; en_attente: number; valides: number; honorees: number; publications: number; taux_conversion: number; total_places: number; places_utilisees: number; recentes_7j: number; offres: { titre: string; nombre_places: number; places_restantes: number; statut: string }[] } | null>(null)
   const [statsErreur, setStatsErreur] = useState(false)
   const [notifRestau, setNotifRestau] = useState(0)
+  const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null)
+  const afficherToast = (msg: string, ok = true) => { setToast({ msg, ok }); setTimeout(() => setToast(null), 3000) }
   const token = localStorage.getItem('token')
   const headers = { 'Authorization': `Bearer ${token}` }
 
@@ -301,13 +304,17 @@ export default function EspaceRestaurateur({ utilisateur, onRetour, onVoirProfil
   const traiterCandidature = async (id: number, statut: 'valide' | 'refuse' | 'honoree') => {
     setActionLoading(id)
     try {
-      await fetch(`${API}/restaurateur/candidatures/${id}`, {
+      const r = await fetch(`${API}/restaurateur/candidatures/${id}`, {
         method: 'PUT',
         headers: { ...headers, 'Content-Type': 'application/json' },
         body: JSON.stringify({ statut }),
       })
+      const d = await r.json()
+      if (!r.ok) { afficherToast(d.error || 'Une erreur est survenue.', false); return }
       setCandidatures(prev => prev.map(c => c.id === id ? { ...c, statut } : c))
       setStats(null)
+      const messages: Record<string, string> = { valide: '✅ Candidature acceptée', refuse: '❌ Candidature refusée', honoree: '🏆 Collaboration honorée !' }
+      afficherToast(messages[statut])
     } finally {
       setActionLoading(null)
     }
@@ -322,6 +329,15 @@ export default function EspaceRestaurateur({ utilisateur, onRetour, onVoirProfil
 
   return (
     <div style={{ minHeight: '100svh', background: 'var(--bg)', paddingBottom: 80 }}>
+      {toast && (
+        <div style={{
+          position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)',
+          background: toast.ok ? '#22c55e' : '#ef4444', color: '#fff',
+          padding: '12px 24px', borderRadius: 12, fontWeight: 700, fontSize: '0.95rem',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.2)', zIndex: 9999,
+          animation: 'fadeInUp 0.3s ease',
+        }}>{toast.msg}</div>
+      )}
       <nav className="lp-nav">
         <span className="lp-logo">Pop Fluence</span>
         <button className="btn btn-ghost btn-sm" onClick={onRetour}>← Retour</button>
